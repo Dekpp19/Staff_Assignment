@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward 15E – Bangkok Hospital Pattaya</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#003087;--blue-mid:#1e4fa0;--blue-light:#e8eef8;
+  --night:#1a2a5e;--night-mid:#2c3e7a;
+  --accent:#e63027;--border:#d0d8ea;--bg:#eef1f8;
+  --surface:#fff;--muted:#6070a0;--text:#1a2340;
+  --row-alt:#f5f8ff;--section-h:#dce7f7;--r:8px;
+  --green:#1a7a3c;--green-bg:#e8f5ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:16px;min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:var(--blue);color:#fff;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.22)}
+.brand{display:flex;align-items:center;gap:16px}
+.logo{width:46px;height:46px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);font-size:13px;line-height:1.3;text-align:center}
+.brand-text h1{font-size:20px;font-weight:700}
+.brand-text p{font-size:13px;opacity:.72;margin-top:2px}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.tbtn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:7px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.15s}
+.tbtn-white{background:#fff;color:var(--blue)}.tbtn-white:hover{background:#d8e4f8}
+.tbtn-red{background:var(--accent);color:#fff}.tbtn-red:hover{filter:brightness(1.1)}
+.tbtn-ghost{background:rgba(255,255,255,.13);color:#fff;border:1.5px solid rgba(255,255,255,.38)}.tbtn-ghost:hover{background:rgba(255,255,255,.22)}
+.tbtn-green{background:#16a34a;color:#fff}.tbtn-green:hover{filter:brightness(1.1)}
+
+/* CONTROL BAR */
+.cbar{background:#fff;border-bottom:2px solid var(--border);padding:16px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+.clabel{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+input[type=date],select{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
+input[type=date]:focus,select:focus{border-color:var(--blue)}
+
+.shift-tabs{display:flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.stab{padding:10px 32px;font-size:15px;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);border:none;font-family:inherit;transition:.18s;border-right:1px solid var(--border)}
+.stab:last-child{border-right:none}
+.stab.active-day{background:var(--blue);color:#fff}
+.stab.active-night{background:var(--night);color:#fff}
+
+/* HISTORY DATE PICKER */
+.hist-wrap{display:flex;align-items:center;gap:10px}
+.hist-date-input{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
+.hist-date-input:focus{border-color:var(--blue)}
+.hist-shift-wrap{display:flex;gap:6px}
+.hsbtn{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-family:inherit;transition:.15s}
+.hsbtn:hover{border-color:var(--blue);color:var(--blue)}
+.hsbtn.hs-active-day{background:var(--blue);color:#fff;border-color:var(--blue)}
+.hsbtn.hs-active-night{background:var(--night);color:#fff;border-color:var(--night)}
+
+/* PAGE */
+.page{padding:30px 40px 80px;max-width:1500px;margin:0 auto}
+.page-title{text-align:center;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:24px}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 14px rgba(0,48,135,.10);margin-bottom:24px;border:1.5px solid var(--border)}
+.card-header{padding:15px 24px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;font-size:18px}
+.card-header.day{background:var(--blue)}
+.card-header.night{background:var(--night)}
+.card-header.section{background:var(--section-h);color:var(--blue);font-size:16px;padding:12px 20px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th{background:var(--blue-mid);color:#fff;padding:10px 14px;text-align:center;font-weight:600;border:1px solid #2a4a9a;white-space:nowrap;font-size:14px}
+.night-tbl th{background:var(--night-mid);border-color:#1a2a6a}
+.tbl td{padding:7px 10px;border:1px solid var(--border);vertical-align:middle}
+.tbl tr:nth-child(even) td{background:var(--row-alt)}
+.tbl tr:hover td{background:var(--blue-light)}
+.tbl td.num{text-align:center;color:var(--muted);font-weight:600;width:38px;font-size:14px}
+.ci,.cs{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;color:var(--text);outline:none;padding:3px 6px}
+.ci:focus,.cs:focus{background:#eef3ff;border-radius:4px}
+
+/* INCIDENT */
+.inc-wrap{border-top:2px solid var(--border)}
+.inc-title{padding:13px 22px;background:#2c3e6b;color:#fff;font-size:16px;font-weight:700}
+.inc-table{width:100%;border-collapse:collapse;font-size:15px}
+.inc-table td{border:1px solid var(--border);padding:10px 16px;vertical-align:top}
+.inc-table td.q{width:65%}
+.inc-table .dark-row td{background:#e4ecf8;font-weight:600}
+.radio-group{display:flex;gap:22px;align-items:center}
+.radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;white-space:nowrap}
+.radio-group input[type=radio]{width:17px;height:17px;cursor:pointer}
+.yes-box{margin-top:8px;display:none}
+.yes-box.show{display:block}
+.yes-box textarea{width:100%;min-height:46px;resize:vertical;border:1.5px solid var(--blue-mid);border-radius:5px;padding:7px 11px;font-family:'Sarabun',sans-serif;font-size:15px;background:#f0f5ff;outline:none}
+
+/* OCCURRENCE */
+.occ-wrap{border-top:1px solid var(--border)}
+.occ-table{width:100%;border-collapse:collapse;font-size:15px}
+.occ-table th{background:#2c3e6b;color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
+.occ-table td{border:1px solid var(--border);padding:8px 12px}
+.occ-table td input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
+
+/* MODAL BASE */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:34px;width:500px;max-height:84vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,.22)}
+.modal h3{font-size:20px;font-weight:700;color:var(--blue);margin-bottom:20px}
+.mfield{margin-bottom:14px}
+.mfield label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.mfield input,.mfield select,.mfield textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:7px;font-family:'Sarabun',sans-serif;font-size:15px}
+.mfield textarea{resize:vertical;min-height:54px}
+.staff-item{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:var(--row-alt)}
+.si-name{font-size:15px;font-weight:500}
+.si-role{font-size:13px;color:var(--muted)}
+.del-btn{background:none;border:none;cursor:pointer;color:#c0392b;font-size:20px;padding:0 5px}
+.modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* TOAST */
+#toast{position:fixed;bottom:28px;right:28px;padding:14px 26px;border-radius:8px;font-size:15px;font-weight:600;display:none;z-index:600;box-shadow:0 3px 18px rgba(0,0,0,.15)}
+#toast.ok{background:#e8f5ec;color:#1a7a3c;border:1px solid #a8d5b5;display:block}
+#toast.err{background:#fdecea;color:#c0392b;border:1px solid #f5bbb6;display:block}
+
+@media print{.topbar,.cbar{display:none}.page{padding:8px;max-width:100%}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">BH<br>PYA</div>
+    <div class="brand-text">
+      <h1>Ward 15E – Staff Assignment</h1>
+      <p>Bangkok Hospital Pattaya</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="tbtn tbtn-ghost" onclick="openModal()">+ รายชื่อ</button>
+    <button class="tbtn tbtn-white" onclick="saveData()">💾 บันทึก</button>
+    <button class="tbtn tbtn-red" onclick="window.print()">🖨 พิมพ์</button>
+  </div>
+</div>
+
+<div class="cbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="clabel">วันที่</span>
+    <input type="date" id="sel-date" onchange="onDateChange()">
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="clabel">กะ</span>
+    <div class="shift-tabs">
+      <button class="stab active-day" id="tab-day" onclick="setShift('day')">☀ กะเช้า 07:00–19:00</button>
+      <button class="stab" id="tab-night" onclick="setShift('night')">🌙 กะดึก 19:00–07:00</button>
+    </div>
+  </div>
+  <!-- ย้อนหลัง: เลือกวันด้วย date picker + เลือกกะ -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="clabel">ดูย้อนหลัง</span>
+    <div class="hist-wrap">
+      <input type="date" id="hist-date" class="hist-date-input" onchange="onHistDateChange()">
+      <div class="hist-shift-wrap">
+        <button class="hsbtn" id="hbtn-day" onclick="loadHistShift('day')">☀ เช้า</button>
+        <button class="hsbtn" id="hbtn-night" onclick="loadHistShift('night')">🌙 ดึก</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-title" id="page-title">—</div>
+  <div id="shift-content"></div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="overlay" id="staff-overlay">
+  <div class="modal">
+    <h3>👤 จัดการรายชื่อบุคลากร</h3>
+    <div class="mfield">
+      <label>ชื่อ-สกุล / ตำแหน่ง</label>
+      <input type="text" id="new-name" placeholder="เช่น กนกวรรณ RN3*">
+    </div>
+    <div class="mfield">
+      <label>ประเภท</label>
+      <select id="new-role">
+        <option value="RN">RN – พยาบาลวิชาชีพ</option>
+        <option value="PN">PN – พยาบาลเทคนิค</option>
+        <option value="AUX">เดขา / ผู้ช่วย</option>
+      </select>
+    </div>
+    <button class="tbtn tbtn-white" style="border:1.5px solid var(--blue);color:var(--blue);margin-bottom:18px" onclick="addStaff()">+ เพิ่ม</button>
+    <div id="staff-list-ui"></div>
+    <div class="modal-btns">
+      <button class="tbtn" style="background:#eee;color:#333;border:1.5px solid #ccc" onclick="closeModal()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// 🔥 FIREBASE CONFIG — แก้ค่าตรงนี้เพื่อเชื่อม Firebase
+// ═══════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyD2-2kU0LXgirj4oSdK3hcSRAhAjtGJhyc",
+  authDomain: "staff-assignment-ba451.firebaseapp.com",
+  projectId: "staff-assignment-ba451",
+  storageBucket: "staff-assignment-ba451.firebasestorage.app",
+  messagingSenderId: "980707484583",
+  appId: "1:980707484583:web:8d1d780d8e72d611628c82",
+  measurementId: "G-Y4D5WB2B1G"
+};
+// ═══════════════════════════════════════════════════════════
+
+let db = null;
+try {
+  firebase.initializeApp(FB_CONFIG);
+  db = firebase.firestore();
+  console.log('✅ Firebase connected:', FB_CONFIG.projectId);
+} catch(e) {
+  console.warn('Firebase not connected:', e.message);
+}
+
+// ═══════════════════════════════════════════
+// STAFF
+// ═══════════════════════════════════════════
+let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || [
+  {id:'s1',name:'กนกวรรณ RN3*',role:'RN'},
+  {id:'s2',name:'ศิริวรรณ RN3',role:'RN'},
+  {id:'s3',name:'มยุรา RN4*',role:'RN'},
+  {id:'s4',name:'แก้วดา RN4*',role:'RN'},
+  {id:'s5',name:'อนงค์ RN4*',role:'RN'},
+  {id:'s6',name:'ชลธิชา RN3',role:'RN'},
+  {id:'s7',name:'สุธิดา RN2',role:'RN'},
+  {id:'s8',name:'ดวงเดือน PN2',role:'PN'},
+  {id:'s9',name:'ปรีชา PN1',role:'PN'},
+  {id:'s10',name:'ปริณทร PN',role:'PN'},
+  {id:'s11',name:'รัตนากรณ์ PN',role:'PN'},
+  {id:'s12',name:'วิลัยวรรณ PN2',role:'PN'},
+  {id:'s13',name:'ศราวรรค์ PN1',role:'PN'},
+  {id:'s14',name:'กัญญ์สุกุลา',role:'AUX'},
+];
+function saveStaff(){ localStorage.setItem('w15e_staff', JSON.stringify(staff)); }
+
+// ═══════════════════════════════════════════
+// CORE STATE
+// ═══════════════════════════════════════════
+let currentShift = 'day', currentDate = '';
+let histSelectedShift = 'day';
+
+const INC_ROWS = [
+  {k:'methods',  label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน', dark:false},
+  {k:'equipment',label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์', dark:false},
+  {k:'supplies', label:'Supplies – เวชภัณฑ์', dark:false},
+  {k:'staffing', label:'Staffing – อัตรากำลัง', dark:false},
+  {k:'experience',label:'Experience – ความฝึงชาญ / คำดี / คำบม', dark:false},
+  {k:'safety',   label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)', dark:false},
+  {k:'multidisc',label:'Criteria Multidisciplinary Conference', dark:true},
+  {k:'admit48',  label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.', dark:true},
+  {k:'admit72',  label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น', dark:true},
+  {k:'admit4',   label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป', dark:true},
+];
+const OCC1 = [{k:'med',label:'Medication Error ทุกมิติ'},{k:'fall',label:'Fall'},{k:'refer',label:'Refer out'}];
+const OCC2 = [{k:'transfer',label:'Transfer to higher level of care'},{k:'death',label:'Death'}];
+
+function todayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function thaiDate(str){
+  if(!str) return '—';
+  return new Date(str+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+}
+function docKey(date,shift){ return `${date.replace(/-/g,'')}_${shift}`; }
+
+// ═══════════════════════════════════════════
+// HISTORY (date picker based)
+// ═══════════════════════════════════════════
+function onHistDateChange() {
+  updateHistShiftBtns();
+  jumpToHist();
+}
+
+function loadHistShift(shift) {
+  histSelectedShift = shift;
+  updateHistShiftBtns();
+  jumpToHist();
+}
+
+function updateHistShiftBtns() {
+  document.getElementById('hbtn-day').className = 'hsbtn' + (histSelectedShift==='day'?' hs-active-day':'');
+  document.getElementById('hbtn-night').className = 'hsbtn' + (histSelectedShift==='night'?' hs-active-night':'');
+}
+
+async function jumpToHist() {
+  const histDate = document.getElementById('hist-date').value;
+  if (!histDate) return;
+
+  document.getElementById('sel-date').value = histDate;
+  currentDate = histDate;
+  currentShift = histSelectedShift;
+
+  document.getElementById('tab-day').className = 'stab' + (currentShift==='day'?' active-day':'');
+  document.getElementById('tab-night').className = 'stab' + (currentShift==='night'?' active-night':'');
+
+  if (db) {
+    try {
+      const doc = await db.collection('ward15e').doc(docKey(histDate, histSelectedShift)).get();
+      if (doc.exists) {
+        renderPage(doc.data());
+        return;
+      }
+    } catch(e) {}
+  }
+
+  renderPage();
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function init(){
+  const today = todayStr();
+  document.getElementById('sel-date').value = today;
+  document.getElementById('hist-date').value = today;
+  currentDate = today;
+  updateHistShiftBtns();
+  setShift('day', true);
+}
+
+function onDateChange(){ currentDate=document.getElementById('sel-date').value; renderPage(); }
+
+function setShift(shift, skipRender){
+  currentShift = shift;
+  document.getElementById('tab-day').className = 'stab'+(shift==='day'?' active-day':'');
+  document.getElementById('tab-night').className = 'stab'+(shift==='night'?' active-night':'');
+  if(!skipRender) renderPage();
+}
+
+function renderPage(preloadData){
+  const shift = currentShift;
+  document.getElementById('page-title').textContent =
+    (shift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(currentDate);
+  const data = preloadData || loadLocal();
+  document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
+  restoreData(data, shift);
+}
+
+function buildShiftHTML(shift, data){
+  const isNight = shift==='night';
+  const hClass = isNight?'night':'day';
+  const thClass = isNight?'night-tbl':'';
+  const roleLabel = r=>r==='rn'?'พยาบาลวิชาชีพ (RN)':r==='pn'?'พยาบาลเทคนิค (PN)':'เดขา / ผู้ช่วย';
+  const roleFilter = r=>({'rn':'RN','pn':'PN','aux':'AUX'})[r];
+
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 กะดึก 19:00–07:00 น.':'☀ กะเช้า 07:00–19:00 น.'}</div>`;
+
+  ['rn','pn','aux'].forEach(role=>{
+    const sid = `${role}-${shift}`;
+    const filtered = staff.filter(s=>s.role===roleFilter(role));
+    const savedRows = (data&&data[role])||[];
+    const rowCount = Math.max(role==='aux'?2:5, savedRows.length);
+    html += `<div class="card-header section">${roleLabel(role)}
+      <button onclick="addRow('${sid}')" style="padding:5px 16px;border-radius:6px;border:1.5px solid var(--blue);background:white;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มแถว</button>
+    </div>
+    <table class="tbl ${thClass}"><thead><tr>
+      <th style="width:42px">#</th>
+      <th>ชื่อ-สกุล</th>
+      <th style="width:80px">ห้อง</th>
+      <th>หน้าที่พิเศษ</th>
+      <th style="width:110px">ลายเซ็น</th>
+      <th style="width:70px">เข้า</th>
+      <th style="width:70px">ออก</th>
+    </tr></thead><tbody id="${sid}">`;
+    for(let i=0;i<rowCount;i++) html += buildRow(i+1, sid, filtered);
+    html += `</tbody></table>`;
+  });
+
+  html += `<div class="inc-wrap"><div class="inc-title">📋 เรื่องแจ้ง / รายงานเหตุการณ์</div><table class="inc-table">`;
+  INC_ROWS.forEach(r=>{
+    html += `<tr class="${r.dark?'dark-row':''}">
+      <td class="q">${r.label}</td>
+      <td>
+        <div class="radio-group">
+          <label><input type="radio" name="${shift}_${r.k}" value="no" checked onchange="toggleYes('${shift}_${r.k}',false)"> No</label>
+          <label><input type="radio" name="${shift}_${r.k}" value="yes" onchange="toggleYes('${shift}_${r.k}',true)"> Yes ระบุสิ่งๆ</label>
+        </div>
+        <div class="yes-box" id="yb_${shift}_${r.k}"><textarea placeholder="ระบุรายละเอียด..." id="yt_${shift}_${r.k}"></textarea></div>
+      </td></tr>`;
+  });
+  html += `</table>`;
+
+  html += `<div class="occ-wrap"><table class="occ-table">
+    <tr><th colspan="2">Occurrence ที่สำคัญ</th><th style="width:130px">ระบุ HN</th><th colspan="2">Occurrence ที่สำคัญ</th><th style="width:130px">ระบุ HN</th></tr>`;
+  for(let i=0;i<Math.max(OCC1.length,OCC2.length);i++){
+    const a=OCC1[i], b=OCC2[i];
+    html += `<tr>
+      <td colspan="2">${a?a.label:''}</td>
+      <td><input type="text" placeholder="HN" id="oc_${shift}_${a?a.k:'na'+i}"></td>
+      <td colspan="2">${b?b.label:''}</td>
+      <td><input type="text" placeholder="HN" id="oc_${shift}_${b?b.k:'nb'+i}"></td>
+    </tr>`;
+  }
+  html += `</table></div></div></div>`;
+  return html;
+}
+
+function buildRow(num, sid, filteredStaff){
+  let opts = '<option value="">— เลือก —</option>';
+  filteredStaff.forEach(s=>{ opts += `<option value="${s.name}">${s.name}</option>`; });
+  return `<tr>
+    <td class="num">${num}</td>
+    <td><select class="cs" data-f="name">${opts}</select></td>
+    <td><input class="ci" type="text" data-f="room" placeholder="ห้อง"></td>
+    <td><input class="ci" type="text" data-f="duty" placeholder="หน้าที่พิเศษ"></td>
+    <td><input class="ci" type="text" data-f="sign" placeholder="ลายเซ็น"></td>
+    <td><input class="ci" type="text" data-f="in" placeholder="เวลา"></td>
+    <td><input class="ci" type="text" data-f="out" placeholder="เวลา"></td>
+  </tr>`;
+}
+
+function addRow(sid){
+  const tbody = document.getElementById(sid);
+  if(!tbody) return;
+  const role = sid.split('-')[0];
+  const filtered = staff.filter(s=>s.role===({'rn':'RN','pn':'PN','aux':'AUX'})[role]);
+  const num = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = buildRow(num, sid, filtered).replace(/^<tr>/,'').replace(/<\/tr>$/,'');
+  tbody.appendChild(tr);
+}
+
+function toggleYes(key, show){
+  const el = document.getElementById(`yb_${key}`);
+  if(el) el.classList.toggle('show', show);
+}
+
+function collectData(){
+  const shift = currentShift, out = {date:currentDate, shift};
+  ['rn','pn','aux'].forEach(role=>{
+    const tbody = document.getElementById(`${role}-${shift}`);
+    out[role] = tbody ? Array.from(tbody.rows).map(tr=>{
+      const row = {};
+      tr.querySelectorAll('[data-f]').forEach(el=>{ row[el.dataset.f] = el.value||''; });
+      return row;
+    }) : [];
+  });
+  out.incidents = {};
+  INC_ROWS.forEach(r=>{
+    const chk = document.querySelector(`input[name="${shift}_${r.k}"]:checked`);
+    const txt = document.getElementById(`yt_${shift}_${r.k}`);
+    out.incidents[r.k] = {v:chk?chk.value:'no', t:txt?txt.value:''};
+  });
+  out.occurrences = {};
+  [...OCC1,...OCC2].forEach(r=>{
+    const el = document.getElementById(`oc_${shift}_${r.k}`);
+    out.occurrences[r.k] = el ? el.value : '';
+  });
+  return out;
+}
+
+function restoreData(data, shift){
+  if(!data) return;
+  ['rn','pn','aux'].forEach(role=>{
+    const rows = data[role]||[];
+    const tbody = document.getElementById(`${role}-${shift}`);
+    if(!tbody) return;
+    rows.forEach((rd,i)=>{
+      if(i>=tbody.rows.length) addRow(`${role}-${shift}`);
+      const tr = tbody.rows[i]; if(!tr) return;
+      tr.querySelectorAll('[data-f]').forEach(el=>{ if(rd[el.dataset.f]) el.value = rd[el.dataset.f]; });
+    });
+  });
+  if(data.incidents) INC_ROWS.forEach(r=>{
+    const inc = data.incidents[r.k]; if(!inc) return;
+    const radio = document.querySelector(`input[name="${shift}_${r.k}"][value="${inc.v}"]`);
+    if(radio){ radio.checked=true; toggleYes(`${shift}_${r.k}`, inc.v==='yes'); }
+    const txt = document.getElementById(`yt_${shift}_${r.k}`);
+    if(txt&&inc.t) txt.value = inc.t;
+  });
+  if(data.occurrences) [...OCC1,...OCC2].forEach(r=>{
+    const el = document.getElementById(`oc_${shift}_${r.k}`);
+    if(el&&data.occurrences[r.k]) el.value = data.occurrences[r.k];
+  });
+}
+
+function loadLocal(){
+  try{ return JSON.parse(localStorage.getItem(`w15e_data_${docKey(currentDate,currentShift)}`)); }catch(e){ return null; }
+}
+function saveLocal(data){ localStorage.setItem(`w15e_data_${docKey(data.date,data.shift)}`, JSON.stringify(data)); }
+
+async function saveData(){
+  const data = collectData();
+  saveLocal(data);
+  if(!db){ showToast('💾 บันทึก Local Storage เรียบร้อย','ok'); return; }
+  try{
+    await db.collection('ward15e').doc(docKey(data.date, data.shift)).set({...data, updatedAt: new Date().toISOString()});
+    showToast('✅ บันทึก Firebase เรียบร้อย','ok');
+  }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); }
+}
+
+// STAFF MODAL
+function openModal(){ renderStaffUI(); document.getElementById('staff-overlay').classList.add('open'); }
+function closeModal(){ document.getElementById('staff-overlay').classList.remove('open'); }
+function renderStaffUI(){
+  const el = document.getElementById('staff-list-ui');
+  if(!staff.length){ el.innerHTML='<p style="color:var(--muted);font-size:15px">ยังไม่มีรายชื่อ</p>'; return; }
+  el.innerHTML = staff.map(s=>`<div class="staff-item"><div><div class="si-name">${s.name}</div><div class="si-role">${s.role}</div></div><button class="del-btn" onclick="delStaff('${s.id}')">✕</button></div>`).join('');
+}
+function addStaff(){
+  const name = document.getElementById('new-name').value.trim();
+  const role = document.getElementById('new-role').value;
+  if(!name) return;
+  staff.push({id:'S'+Date.now(), name, role});
+  saveStaff(); renderStaffUI(); renderPage();
+  document.getElementById('new-name').value = '';
+  if(db) db.collection('ward15e_staff').doc('list').set({staff});
+}
+function delStaff(id){
+  staff = staff.filter(s=>s.id!==id);
+  saveStaff(); renderStaffUI(); renderPage();
+  if(db) db.collection('ward15e_staff').doc('list').set({staff});
+}
+document.getElementById('staff-overlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+function showToast(msg, type){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = type;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.className=''; }, 3200);
+}
+
+init();
+</script>
+</body>
+</html>
