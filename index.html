@@ -12,9 +12,12 @@
   --accent:#e63027;--border:#d0d8ea;--bg:#eef1f8;
   --surface:#fff;--muted:#6070a0;--text:#1a2340;
   --row-alt:#f5f8ff;--section-h:#dce7f7;--r:8px;
+  --hist-bg:#f0f4ff;--hist-border:#b8c8e8;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:16px;min-height:100vh}
+
+/* ─── TOPBAR ─── */
 .topbar{background:var(--blue);color:#fff;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.22)}
 .brand{display:flex;align-items:center;gap:16px}
 .logo{width:46px;height:46px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);font-size:13px;line-height:1.3;text-align:center}
@@ -25,6 +28,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 .tbtn-white{background:#fff;color:var(--blue)}.tbtn-white:hover{background:#d8e4f8}
 .tbtn-red{background:var(--accent);color:#fff}.tbtn-red:hover{filter:brightness(1.1)}
 .tbtn-ghost{background:rgba(255,255,255,.13);color:#fff;border:1.5px solid rgba(255,255,255,.38)}.tbtn-ghost:hover{background:rgba(255,255,255,.22)}
+
+/* ─── CBAR (date / shift) ─── */
 .cbar{background:#fff;border-bottom:2px solid var(--border);padding:16px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap}
 .clabel{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
 input[type=date],select{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
@@ -34,14 +39,48 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 .stab:last-child{border-right:none}
 .stab.active-day{background:var(--blue);color:#fff}
 .stab.active-night{background:var(--night);color:#fff}
-.hist-wrap{display:flex;align-items:center;gap:8px}
-.hist-date-input{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
+
+/* ─── HISTORY PANEL (NEW) ─── */
+.hist-panel{background:var(--hist-bg);border:1.5px solid var(--hist-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-left:auto}
+.hist-panel-label{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.hist-date-input{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--hist-border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
 .hist-date-input:focus{border-color:var(--blue)}
-.hsbtn{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-family:inherit;transition:.15s}
-.hsbtn:hover{border-color:var(--blue);color:var(--blue)}
-.hsbtn.hs-active-day{background:var(--blue);color:#fff;border-color:var(--blue)}
-.hsbtn.hs-active-night{background:var(--night);color:#fff;border-color:var(--night)}
-.page{padding:30px 40px 80px;max-width:1500px;margin:0 auto}
+.hist-shift-group{display:flex;gap:6px}
+.hsbtn{padding:9px 18px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--hist-border);background:#fff;color:var(--muted);font-family:inherit;transition:.15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.hsbtn:hover{border-color:var(--blue);color:var(--blue);background:#e8eeff}
+.hsbtn.hs-active-day{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 8px rgba(0,48,135,.25)}
+.hsbtn.hs-active-night{background:var(--night);color:#fff;border-color:var(--night);box-shadow:0 2px 8px rgba(26,42,94,.25)}
+.hist-go-btn{padding:9px 18px;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;border:none;background:var(--blue);color:#fff;font-family:inherit;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.hist-go-btn:hover{background:#1e4fa0}
+.hist-divider{width:1px;height:28px;background:var(--hist-border)}
+
+/* ─── HISTORY MODE BANNER ─── */
+.hist-banner{display:none;background:#fff3cd;border:1.5px solid #f0c050;border-radius:8px;padding:12px 20px;margin:0 40px 0;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hist-banner.show{display:flex}
+.hist-banner-text{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#7a5c00}
+.hist-banner-badge{background:#f0c050;color:#5a3e00;padding:3px 10px;border-radius:20px;font-size:13px;font-weight:700}
+.hist-banner-actions{display:flex;gap:8px}
+.hist-action-btn{padding:8px 18px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px;border:none}
+.hist-edit-btn{background:var(--blue);color:#fff}.hist-edit-btn:hover{filter:brightness(1.1)}
+.hist-edit-btn.editing{background:#1a7a3c;color:#fff}
+.hist-del-btn{background:var(--accent);color:#fff}.hist-del-btn:hover{filter:brightness(1.1)}
+.hist-back-btn{background:#eee;color:#333;border:1.5px solid #ccc !important;border:none}.hist-back-btn:hover{background:#ddd}
+.hist-save-btn{background:#1a7a3c;color:#fff}.hist-save-btn:hover{filter:brightness(1.1)}
+
+/* ─── READONLY OVERLAY ─── */
+body.hist-readonly .ci,
+body.hist-readonly .cs,
+body.hist-readonly .inc-table input,
+body.hist-readonly .inc-table textarea,
+body.hist-readonly .occ-table input,
+body.hist-readonly .inc-table input[type=radio]{
+  pointer-events:none;opacity:.7;
+}
+body.hist-readonly .tbl button,
+body.hist-readonly .add-row-btn{display:none}
+
+/* ─── PAGE ─── */
+.page{padding:20px 40px 80px;max-width:1500px;margin:0 auto}
 .page-title{text-align:center;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:24px}
 .card{background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 14px rgba(0,48,135,.10);margin-bottom:24px;border:1.5px solid var(--border)}
 .card-header{padding:15px 24px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;font-size:18px}
@@ -74,6 +113,8 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 .occ-table th{background:#2c3e6b;color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .occ-table td{border:1px solid var(--border);padding:8px 12px}
 .occ-table td input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
+
+/* ─── MODALS ─── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:#fff;border-radius:14px;padding:34px;width:500px;max-height:84vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,.22)}
@@ -86,14 +127,29 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 .si-role{font-size:13px;color:var(--muted)}
 .del-btn{background:none;border:none;cursor:pointer;color:#c0392b;font-size:20px;padding:0 5px}
 .modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* ─── CONFIRM MODAL ─── */
+.confirm-modal{background:#fff;border-radius:14px;padding:34px;width:440px;box-shadow:0 10px 50px rgba(0,0,0,.22);text-align:center}
+.confirm-modal .ci-icon{font-size:48px;margin-bottom:14px}
+.confirm-modal h3{font-size:20px;font-weight:700;color:#c0392b;margin-bottom:10px}
+.confirm-modal p{color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:24px}
+.confirm-modal .cm-btns{display:flex;justify-content:center;gap:12px}
+.cm-cancel{padding:11px 28px;border-radius:7px;border:1.5px solid #ccc;background:#f5f5f5;color:#555;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.cm-cancel:hover{background:#eee}
+.cm-confirm{padding:11px 28px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.cm-confirm:hover{filter:brightness(1.1)}
+
+/* ─── TOAST ─── */
 #toast{position:fixed;bottom:28px;right:28px;padding:14px 26px;border-radius:8px;font-size:15px;font-weight:600;display:none;z-index:600;box-shadow:0 3px 18px rgba(0,0,0,.15)}
 #toast.ok{background:#e8f5ec;color:#1a7a3c;border:1px solid #a8d5b5;display:block}
 #toast.err{background:#fdecea;color:#c0392b;border:1px solid #f5bbb6;display:block}
-@media print{.topbar,.cbar{display:none}.page{padding:8px;max-width:100%}}
+
+@media print{.topbar,.cbar,.hist-banner{display:none !important}.page{padding:8px;max-width:100%}}
 </style>
 </head>
 <body>
 
+<!-- TOPBAR -->
 <div class="topbar">
   <div class="brand">
     <div class="logo">BH<br>PYA</div>
@@ -109,11 +165,14 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
   </div>
 </div>
 
+<!-- CONTROL BAR -->
 <div class="cbar">
+  <!-- วันที่ -->
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">วันที่</span>
     <input type="date" id="sel-date" onchange="onDateChange()">
   </div>
+  <!-- กะ -->
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">กะ</span>
     <div class="shift-tabs">
@@ -121,21 +180,41 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
       <button class="stab" id="tab-night" onclick="setShift('night')">🌙 กะดึก 19:00–07:00</button>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span class="clabel">ดูย้อนหลัง</span>
-    <div class="hist-wrap">
-      <input type="date" id="hist-date" class="hist-date-input" onchange="onHistDateChange()">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="loadHistShift('day')">☀ เช้า</button>
-      <button class="hsbtn" id="hbtn-night" onclick="loadHistShift('night')">🌙 ดึก</button>
+
+  <!-- HISTORY PANEL (redesigned) -->
+  <div class="hist-panel">
+    <div class="hist-panel-label">🕘 ดูย้อนหลัง</div>
+    <div class="hist-divider"></div>
+    <input type="date" id="hist-date" class="hist-date-input">
+    <div class="hist-shift-group">
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">☀ เช้า</button>
+      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 ดึก</button>
     </div>
+    <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
   </div>
 </div>
 
+<!-- HISTORY MODE BANNER -->
+<div class="hist-banner" id="hist-banner">
+  <div class="hist-banner-text">
+    <span class="hist-banner-badge">📅 ย้อนหลัง</span>
+    <span id="hist-banner-info">—</span>
+  </div>
+  <div class="hist-banner-actions">
+    <button class="hist-action-btn hist-edit-btn" id="hist-edit-btn" onclick="toggleEditMode()">✏️ แก้ไข</button>
+    <button class="hist-action-btn hist-save-btn" id="hist-save-btn" style="display:none" onclick="saveHistEdits()">💾 บันทึกการแก้ไข</button>
+    <button class="hist-action-btn hist-del-btn" onclick="confirmDeleteHist()">🗑 ลบข้อมูลนี้</button>
+    <button class="hist-action-btn hist-back-btn" style="background:#eee;color:#444;border:1.5px solid #ccc" onclick="exitHistMode()">✕ ออกจากโหมดย้อนหลัง</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
 <div class="page">
   <div class="page-title" id="page-title">—</div>
   <div id="shift-content"></div>
 </div>
 
+<!-- STAFF MODAL -->
 <div class="overlay" id="staff-overlay">
   <div class="modal">
     <h3>👤 จัดการรายชื่อบุคลากร</h3>
@@ -159,6 +238,19 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
   </div>
 </div>
 
+<!-- CONFIRM DELETE MODAL -->
+<div class="overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <div class="ci-icon">⚠️</div>
+    <h3>ยืนยันการลบข้อมูล?</h3>
+    <p id="confirm-desc">ข้อมูลนี้จะถูกลบถาวรทั้งใน Firebase และ Local Storage<br>ไม่สามารถกู้คืนได้</p>
+    <div class="cm-btns">
+      <button class="cm-cancel" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="cm-confirm" onclick="doDelete()">ลบข้อมูล</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- Firebase SDKs -->
@@ -167,7 +259,7 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 
 <script>
 // ════════════════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG — แก้ค่าตรงนี้
+// 🔥 FIREBASE CONFIG
 // ════════════════════════════════════════════════════════
 const FB_CONFIG = {
   apiKey:            "AIzaSyD2-2kU0LXgirj4oSdK3hcSRAhAjtGJhyc",
@@ -178,16 +270,12 @@ const FB_CONFIG = {
   messagingSenderId: "980707484583",
   appId:             "1:980707484583:web:8d1d780d8e72d611628c82"
 };
-// ════════════════════════════════════════════════════════
 
 let db = null;
 try {
   firebase.initializeApp(FB_CONFIG);
   db = firebase.database();
-  console.log('✅ Realtime Database connected:', FB_CONFIG.projectId);
-} catch(e) {
-  console.warn('⚠ Firebase not connected:', e.message);
-}
+} catch(e) { console.warn('⚠ Firebase:', e.message); }
 
 // ════════════════════════════════════════
 // STAFF
@@ -215,6 +303,10 @@ function saveStaff(){ localStorage.setItem('w15e_staff', JSON.stringify(staff));
 // ════════════════════════════════════════
 let currentShift = 'day', currentDate = '';
 let histSelectedShift = 'day';
+let isHistMode  = false;   // กำลังดูย้อนหลัง?
+let isEditMode  = false;   // กำลังแก้ไขย้อนหลัง?
+let histViewDate  = '';
+let histViewShift = '';
 
 const INC_ROWS = [
   {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                              dark:false},
@@ -242,45 +334,135 @@ function thaiDate(str){
 function docKey(date, shift){ return `${date.replace(/-/g,'')}_${shift}`; }
 
 // ════════════════════════════════════════
-// HISTORY
+// HISTORY CONTROLS
 // ════════════════════════════════════════
-function onHistDateChange(){ updateHistShiftBtns(); jumpToHist(); }
-
-function loadHistShift(shift){ histSelectedShift = shift; updateHistShiftBtns(); jumpToHist(); }
-
-function updateHistShiftBtns(){
-  document.getElementById('hbtn-day').className   = 'hsbtn' + (histSelectedShift==='day'  ?' hs-active-day':'');
-  document.getElementById('hbtn-night').className = 'hsbtn' + (histSelectedShift==='night'?' hs-active-night':'');
+function setHistShift(shift){
+  histSelectedShift = shift;
+  document.getElementById('hbtn-day').className   = 'hsbtn' + (shift==='day'  ?' hs-active-day':'');
+  document.getElementById('hbtn-night').className = 'hsbtn' + (shift==='night'?' hs-active-night':'');
 }
 
 async function jumpToHist(){
   const histDate = document.getElementById('hist-date').value;
-  if(!histDate) return;
+  if(!histDate){ showToast('⚠ กรุณาเลือกวันที่ก่อน','err'); return; }
 
-  document.getElementById('sel-date').value = histDate;
-  currentDate  = histDate;
-  currentShift = histSelectedShift;
-  document.getElementById('tab-day').className   = 'stab' + (currentShift==='day'  ?' active-day':'');
-  document.getElementById('tab-night').className = 'stab' + (currentShift==='night'?' active-night':'');
+  histViewDate  = histDate;
+  histViewShift = histSelectedShift;
 
+  // ลองดึง Firebase ก่อน แล้ว fallback local
+  let data = null;
   if(db){
     try{
       const snap = await db.ref('ward15e/' + docKey(histDate, histSelectedShift)).get();
-      if(snap.exists()){ renderPage(snap.val()); return; }
+      if(snap.exists()) data = snap.val();
     }catch(e){}
   }
+  if(!data) data = loadLocalByKey(docKey(histDate, histSelectedShift));
+
+  // สลับ view ไปวันนั้น (แต่ไม่แตะ currentDate/currentShift)
+  isHistMode = true;
+  isEditMode = false;
+  document.body.classList.add('hist-readonly');
+
+  const banner = document.getElementById('hist-banner');
+  banner.classList.add('show');
+  document.getElementById('hist-banner-info').textContent =
+    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00':'🌙 กะดึก 19:00–07:00') + ' — ' + thaiDate(histDate);
+
+  document.getElementById('hist-edit-btn').textContent   = '✏️ แก้ไข';
+  document.getElementById('hist-edit-btn').className     = 'hist-action-btn hist-edit-btn';
+  document.getElementById('hist-save-btn').style.display = 'none';
+
+  document.getElementById('page-title').textContent =
+    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(histDate);
+
+  document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, data);
+  restoreData(data, histSelectedShift);
+}
+
+function toggleEditMode(){
+  isEditMode = !isEditMode;
+  const editBtn = document.getElementById('hist-edit-btn');
+  const saveBtn = document.getElementById('hist-save-btn');
+  if(isEditMode){
+    document.body.classList.remove('hist-readonly');
+    editBtn.textContent = '🔒 ล็อกการแก้ไข';
+    editBtn.className   = 'hist-action-btn hist-edit-btn editing';
+    saveBtn.style.display = 'inline-flex';
+  } else {
+    document.body.classList.add('hist-readonly');
+    editBtn.textContent = '✏️ แก้ไข';
+    editBtn.className   = 'hist-action-btn hist-edit-btn';
+    saveBtn.style.display = 'none';
+  }
+}
+
+async function saveHistEdits(){
+  // บันทึกทับข้อมูลเดิมของวันย้อนหลัง
+  const origDate  = currentDate;
+  const origShift = currentShift;
+  currentDate  = histViewDate;
+  currentShift = histViewShift;
+  const data = collectData();
+  saveLocal(data);
+  currentDate  = origDate;
+  currentShift = origShift;
+
+  if(db){
+    try{
+      await db.ref('ward15e/' + docKey(histViewDate, histViewShift)).set({...data, updatedAt: new Date().toISOString()});
+      showToast('✅ บันทึกการแก้ไขสำเร็จ','ok');
+    }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); return; }
+  } else {
+    showToast('💾 บันทึก Local เรียบร้อย','ok');
+  }
+  // ล็อกกลับ
+  toggleEditMode();
+}
+
+function exitHistMode(){
+  isHistMode = false;
+  isEditMode = false;
+  document.body.classList.remove('hist-readonly');
+  document.getElementById('hist-banner').classList.remove('show');
+  // คืนค่า view ปัจจุบัน
   renderPage();
 }
 
+// ─── DELETE ───
+function confirmDeleteHist(){
+  document.getElementById('confirm-desc').innerHTML =
+    `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>` +
+    `กะ: <strong>${histViewShift==='day'?'☀ กะเช้า':'🌙 กะดึก'}</strong><br><br>` +
+    `ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); }
+
+async function doDelete(){
+  closeConfirm();
+  const key = docKey(histViewDate, histViewShift);
+  localStorage.removeItem(`w15e_data_${key}`);
+  if(db){
+    try{
+      await db.ref('ward15e/' + key).remove();
+      showToast('🗑 ลบข้อมูลเรียบร้อย','ok');
+    }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); return; }
+  } else {
+    showToast('🗑 ลบข้อมูล Local เรียบร้อย','ok');
+  }
+  exitHistMode();
+}
+
 // ════════════════════════════════════════
-// RENDER
+// MAIN RENDER
 // ════════════════════════════════════════
 function init(){
   const today = todayStr();
   document.getElementById('sel-date').value  = today;
   document.getElementById('hist-date').value = today;
   currentDate = today;
-  updateHistShiftBtns();
+  setHistShift('day');
   setShift('day', true);
 }
 
@@ -294,6 +476,7 @@ function setShift(shift, skipRender){
 }
 
 function renderPage(preloadData){
+  if(isHistMode){ return; } // อย่ารบกวน hist view
   const shift = currentShift;
   document.getElementById('page-title').textContent =
     (shift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(currentDate);
@@ -317,7 +500,7 @@ function buildShiftHTML(shift, data){
     const savedRows  = (data&&data[role])||[];
     const rowCount   = Math.max(role==='aux'?2:5, savedRows.length);
     html += `<div class="card-header section">${roleLabel(role)}
-      <button onclick="addRow('${sid}')" style="padding:5px 16px;border-radius:6px;border:1.5px solid var(--blue);background:white;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มแถว</button>
+      <button class="add-row-btn" onclick="addRow('${sid}')" style="padding:5px 16px;border-radius:6px;border:1.5px solid var(--blue);background:white;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มแถว</button>
     </div>
     <table class="tbl ${thClass}"><thead><tr>
       <th style="width:42px">#</th><th>ชื่อ-สกุล</th>
@@ -388,7 +571,8 @@ function toggleYes(key, show){
 }
 
 function collectData(){
-  const shift = currentShift, out = {date:currentDate, shift};
+  const shift = isHistMode ? histViewShift : currentShift;
+  const out = {date: isHistMode ? histViewDate : currentDate, shift};
   ['rn','pn','aux'].forEach(role=>{
     const tbody = document.getElementById(`${role}-${shift}`);
     out[role] = tbody ? Array.from(tbody.rows).map(tr=>{
@@ -436,7 +620,10 @@ function restoreData(data, shift){
 }
 
 function loadLocal(){
-  try{ return JSON.parse(localStorage.getItem(`w15e_data_${docKey(currentDate,currentShift)}`)); }
+  return loadLocalByKey(docKey(currentDate, currentShift));
+}
+function loadLocalByKey(key){
+  try{ return JSON.parse(localStorage.getItem(`w15e_data_${key}`)); }
   catch(e){ return null; }
 }
 function saveLocal(data){ localStorage.setItem(`w15e_data_${docKey(data.date,data.shift)}`, JSON.stringify(data)); }
@@ -470,16 +657,19 @@ function addStaff(){
   const role = document.getElementById('new-role').value;
   if(!name) return;
   staff.push({id:'S'+Date.now(), name, role});
-  saveStaff(); renderStaffUI(); renderPage();
+  saveStaff(); renderStaffUI();
+  if(!isHistMode) renderPage();
   document.getElementById('new-name').value = '';
   if(db) db.ref('ward15e_staff/list').set({staff});
 }
 function delStaff(id){
   staff = staff.filter(s=>s.id!==id);
-  saveStaff(); renderStaffUI(); renderPage();
+  saveStaff(); renderStaffUI();
+  if(!isHistMode) renderPage();
   if(db) db.ref('ward15e_staff/list').set({staff});
 }
 document.getElementById('staff-overlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.getElementById('confirm-overlay').addEventListener('click', function(e){ if(e.target===this) closeConfirm(); });
 
 function showToast(msg, type){
   const el = document.getElementById('toast');
