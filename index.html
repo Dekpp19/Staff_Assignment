@@ -102,8 +102,16 @@ body.hist-readonly .add-row-btn{display:none}
 .inc-table td{border:1px solid var(--border);padding:10px 16px;vertical-align:top}
 .inc-table td.q{width:65%}
 .inc-table .dark-row td{background:#e4ecf8;color:var(--text);font-weight:600;border:1px solid var(--border)}
+
 /* Criteria header row — สีเข้มเหมือน title ไม่มี radio */
 .inc-table .criteria-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:11px 16px;border:1px solid #1a2a5e}
+
+/* ── NEW: multidisc-header = หัวข้อสีเข้ม แต่มีช่อง No/Yes ── */
+.inc-table .multidisc-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:10px 16px;border:1px solid #1a2a5e}
+.inc-table .multidisc-header input[type=radio]{accent-color:#fff;width:17px;height:17px;cursor:pointer;}
+.inc-table .multidisc-header textarea{background:#3a5080;color:#fff;border-color:#5a78b0;}
+.inc-table .multidisc-header textarea::placeholder{color:rgba(255,255,255,.55);}
+
 .radio-group{display:flex;gap:22px;align-items:center}
 .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;white-space:nowrap}
 .radio-group input[type=radio]{width:17px;height:17px;cursor:pointer}
@@ -114,9 +122,9 @@ body.hist-readonly .add-row-btn{display:none}
 .occ-table{width:100%;border-collapse:collapse;font-size:15px}
 .occ-table th{background:#2c3e6b;color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .occ-table td{border:1px solid var(--border);padding:8px 12px}
-/* ลดช่องชื่อ เพิ่มช่อง HN */
-.occ-table td.occ-label{width:28%}
-.occ-table td.occ-hn{width:22%}
+/* ลดช่อง Occurrence label */
+.occ-table td.occ-label{width:20%;font-size:14px}
+.occ-table td.occ-hn{width:30%}
 .occ-table td.occ-hn input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
 
 /* ─── MODALS ─── */
@@ -179,10 +187,10 @@ body.hist-readonly .add-row-btn{display:none}
   </div>
   <!-- กะ — แยกปุ่ม 2 ปุ่ม ไม่มี tab รวม -->
   <div style="display:flex;align-items:center;gap:10px">
-    <span class="clabel">กะ</span>
+    <span class="clabel">เวลา</span>
     <div style="display:flex;gap:8px">
-      <button class="shift-btn active-day" id="tab-day" onclick="setShift('day')">☀ 07:00–19:00</button>
-      <button class="shift-btn" id="tab-night" onclick="setShift('night')">🌙 19:00–07:00</button>
+      <button class="shift-btn active-day" id="tab-day" onclick="setShift('day')">07:00–19:00</button>
+      <button class="shift-btn" id="tab-night" onclick="setShift('night')">19:00–07:00</button>
     </div>
   </div>
 
@@ -192,8 +200,8 @@ body.hist-readonly .add-row-btn{display:none}
     <div class="hist-divider"></div>
     <input type="date" id="hist-date" class="hist-date-input">
     <div class="hist-shift-group">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">☀ เช้า</button>
-      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 ดึก</button>
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')"> 07:00–19:00</button>
+      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')"> 19:00–07:00</button>
     </div>
     <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
   </div>
@@ -313,18 +321,25 @@ let isEditMode  = false;
 let histViewDate  = '';
 let histViewShift = '';
 
-// hasRadio: false = เป็นหัวข้อสีเข้ม ไม่มีปุ่ม No/Yes
+// ─────────────────────────────────────────────────────────────────────────────
+// INC_ROWS
+//   dark:true  = แถวสีฟ้าอ่อน (sub-item ใต้หัวข้อ)   ← admit48/72/4 เดิม
+//   dark:false = แถวสีขาวปกติ
+//   isMultidisc:true = แถวหัวข้อสีเข้ม (#2c3e6b) แต่มี No/Yes
+// ─────────────────────────────────────────────────────────────────────────────
 const INC_ROWS = [
-  {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                              dark:false, hasRadio:true},
-  {k:'equipment', label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์',                                 dark:false, hasRadio:true},
-  {k:'supplies',  label:'Supplies – เวชภัณฑ์',                                                   dark:false, hasRadio:true},
-  {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                 dark:false, hasRadio:true},
-  {k:'experience',label:'Experience – ความพึงพอใจ / คำติ / คำชม',                               dark:false, hasRadio:true},
-  {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)',  dark:false, hasRadio:true},
-  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                  dark:true,  hasRadio:true},
-  {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                              dark:true,  hasRadio:true},
-  {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                  dark:true,  hasRadio:true},
-  {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                      dark:true,  hasRadio:true},
+  {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                             dark:false, hasRadio:true},
+  {k:'equipment', label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์',                                dark:false, hasRadio:true},
+  {k:'supplies',  label:'Supplies – เวชภัณฑ์',                                                  dark:false, hasRadio:true},
+  {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                dark:false, hasRadio:true},
+  {k:'experience',label:'Experience – ความพึงพอใจ / คำติ / คำชม',                              dark:false, hasRadio:true},
+  {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)', dark:false, hasRadio:true},
+  // ── หัวข้อสีเข้ม ไม่มี radio ──
+  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                 dark:false, hasRadio:false, isMultidisc:true},
+  // ── 3 รายการใต้หัวข้อ: สีขาว (dark:false) มี No/Yes ──
+  {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                             dark:false, hasRadio:true},
+  {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                 dark:false, hasRadio:true},
+  {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                     dark:false, hasRadio:true},
 ];
 const OCC1 = [{k:'med',label:'Medication Error ทุกมิติ'},{k:'fall',label:'Fall'},{k:'refer',label:'Refer out'}];
 const OCC2 = [{k:'transfer',label:'Transfer to higher level of care'},{k:'death',label:'Death'}];
@@ -371,14 +386,14 @@ async function jumpToHist(){
   const banner = document.getElementById('hist-banner');
   banner.classList.add('show');
   document.getElementById('hist-banner-info').textContent =
-    (histSelectedShift==='day'?'☀ กะเช้า':'🌙 กะดึก') + ' — ' + thaiDate(histDate);
+    (histSelectedShift==='day'?' 07:00–19:00':' 19:00–07:00') + ' — ' + thaiDate(histDate);
 
   document.getElementById('hist-edit-btn').textContent   = '✏️ แก้ไข';
   document.getElementById('hist-edit-btn').className     = 'hist-action-btn hist-edit-btn';
   document.getElementById('hist-save-btn').style.display = 'none';
 
   document.getElementById('page-title').textContent =
-    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(histDate);
+    (histSelectedShift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(histDate);
 
   document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, data);
   restoreData(data, histSelectedShift);
@@ -433,7 +448,7 @@ function exitHistMode(){
 function confirmDeleteHist(){
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>` +
-    `กะ: <strong>${histViewShift==='day'?'☀ กะเช้า':'🌙 กะดึก'}</strong><br><br>` +
+    `กะ: <strong>${histViewShift==='day'?' 07:00–19:00':' 19:00–07:00'}</strong><br><br>` +
     `ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`;
   document.getElementById('confirm-overlay').classList.add('open');
 }
@@ -481,7 +496,7 @@ function renderPage(preloadData){
   if(isHistMode){ return; }
   const shift = currentShift;
   document.getElementById('page-title').textContent =
-    (shift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(currentDate);
+    (shift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(currentDate);
   const data = preloadData || loadLocal();
   document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
   restoreData(data, shift);
@@ -494,7 +509,7 @@ function buildShiftHTML(shift, data){
   const roleLabel = r => r==='rn'?'RN' : r==='pn'?'PN' : 'Admin Officer';
   const roleMap   = {rn:'RN', pn:'PN', aux:'AUX'};
 
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 กะดึก 19:00–07:00 น.':'☀ กะเช้า 07:00–19:00 น.'}</div>`;
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?' 19:00–07:00 น.':' 07:00–19:00 น.'}</div>`;
 
   ['rn','pn','aux'].forEach(role=>{
     const sid        = `${role}-${shift}`;
@@ -506,8 +521,8 @@ function buildShiftHTML(shift, data){
     </div>
     <table class="tbl ${thClass}"><thead><tr>
       <th style="width:42px">#</th>
-      <th style="width:20%">ชื่อ-สกุล</th>
-      <th style="width:160px">ห้อง</th>
+      <th style="width:13%">ชื่อ-สกุล</th>
+      <th style="width:200px">ทีม/ห้อง</th>
       <th>หน้าที่พิเศษ</th>
       <th style="width:110px">ลายเซ็น</th>
       <th style="width:70px">เข้า</th><th style="width:70px">ออก</th>
@@ -522,10 +537,13 @@ function buildShiftHTML(shift, data){
       <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:center;font-size:14px;font-weight:600;border:1px solid #2a4a9a;width:70px">No</th>
       <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:center;font-size:14px;font-weight:600;border:1px solid #2a4a9a;">Yes – ระบุรายละเอียด</th>
     </tr></thead><tbody>`;
+
   INC_ROWS.forEach(r=>{
-    if(!r.hasRadio){
+    if(r.isMultidisc){
+      // ── หัวข้อสีเข้ม criteria-header ไม่มี radio (เหมือน title) ──
       html += `<tr class="criteria-header"><td colspan="3">${r.label}</td></tr>`;
     } else {
+      // ── แถวปกติ สีขาว (dark:false) หรือสีฟ้าอ่อน (dark:true) ──
       const darkStyle = r.dark ? 'background:#e4ecf8;color:var(--text,#1a2340);font-weight:600;' : '';
       html += `<tr>
         <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;">${r.label}</td>
@@ -539,9 +557,10 @@ function buildShiftHTML(shift, data){
       </tr>`;
     }
   });
+
   html += `</tbody></table>`;
 
-  // Occurrence — ช่องชื่อแคบลง ช่อง HN กว้างขึ้น
+  // Occurrence
   html += `<div class="occ-wrap"><table class="occ-table">
     <tr>
       <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
@@ -566,7 +585,7 @@ function buildRow(num, sid, filteredStaff){
   return `<tr>
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
-    <td><input class="ci" type="text" data-f="room" placeholder="ห้อง"></td>
+    <td><input class="ci" type="text" data-f="room" placeholder="ทีม/ห้อง"></td>
     <td><input class="ci" type="text" data-f="duty" placeholder="หน้าที่พิเศษ"></td>
     <td><input class="ci" type="text" data-f="sign" placeholder="ลายเซ็น"></td>
     <td><input class="ci" type="text" data-f="in"   placeholder="เวลา"></td>
