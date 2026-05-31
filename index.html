@@ -101,7 +101,7 @@ body.hist-readonly .add-row-btn{display:none}
 .inc-table{width:100%;border-collapse:collapse;font-size:15px}
 .inc-table td{border:1px solid var(--border);padding:10px 16px;vertical-align:top}
 .inc-table td.q{width:65%}
-.inc-table .dark-row td{background:#e4ecf8;font-weight:600}
+.inc-table .dark-row td{background:#e4ecf8;color:var(--text);font-weight:600;border:1px solid var(--border)}
 /* Criteria header row — สีเข้มเหมือน title ไม่มี radio */
 .inc-table .criteria-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:11px 16px;border:1px solid #1a2a5e}
 .radio-group{display:flex;gap:22px;align-items:center}
@@ -192,7 +192,7 @@ body.hist-readonly .add-row-btn{display:none}
     <div class="hist-divider"></div>
     <input type="date" id="hist-date" class="hist-date-input">
     <div class="hist-shift-group">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">07.00 - 19.00</button>
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">☀ เช้า</button>
       <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 ดึก</button>
     </div>
     <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
@@ -321,7 +321,7 @@ const INC_ROWS = [
   {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                 dark:false, hasRadio:true},
   {k:'experience',label:'Experience – ความพึงพอใจ / คำติ / คำชม',                               dark:false, hasRadio:true},
   {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)',  dark:false, hasRadio:true},
-  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                  dark:true,  hasRadio:false},
+  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                  dark:true,  hasRadio:true},
   {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                              dark:true,  hasRadio:true},
   {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                  dark:true,  hasRadio:true},
   {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                      dark:true,  hasRadio:true},
@@ -371,14 +371,14 @@ async function jumpToHist(){
   const banner = document.getElementById('hist-banner');
   banner.classList.add('show');
   document.getElementById('hist-banner-info').textContent =
-    (histSelectedShift==='day'?'07:00–19:00':'19:00–07:00') + ' — ' + thaiDate(histDate);
+    (histSelectedShift==='day'?'☀ กะเช้า':'🌙 กะดึก') + ' — ' + thaiDate(histDate);
 
   document.getElementById('hist-edit-btn').textContent   = '✏️ แก้ไข';
   document.getElementById('hist-edit-btn').className     = 'hist-action-btn hist-edit-btn';
   document.getElementById('hist-save-btn').style.display = 'none';
 
   document.getElementById('page-title').textContent =
-    (histSelectedShift==='day'?' 07:00–19:00 ':' 19:00–07:00 ')+' — '+thaiDate(histDate);
+    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(histDate);
 
   document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, data);
   restoreData(data, histSelectedShift);
@@ -433,7 +433,7 @@ function exitHistMode(){
 function confirmDeleteHist(){
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>` +
-    `กะ: <strong>${histViewShift==='day'?' 07.00-19.00 ':'19.00-07.00'}</strong><br><br>` +
+    `กะ: <strong>${histViewShift==='day'?'☀ กะเช้า':'🌙 กะดึก'}</strong><br><br>` +
     `ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`;
   document.getElementById('confirm-overlay').classList.add('open');
 }
@@ -481,7 +481,7 @@ function renderPage(preloadData){
   if(isHistMode){ return; }
   const shift = currentShift;
   document.getElementById('page-title').textContent =
-    (shift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(currentDate);
+    (shift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(currentDate);
   const data = preloadData || loadLocal();
   document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
   restoreData(data, shift);
@@ -494,7 +494,7 @@ function buildShiftHTML(shift, data){
   const roleLabel = r => r==='rn'?'RN' : r==='pn'?'PN' : 'Admin Officer';
   const roleMap   = {rn:'RN', pn:'PN', aux:'AUX'};
 
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?' 19:00–07:00 น.':' 07:00–19:00 น.'}</div>`;
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 กะดึก 19:00–07:00 น.':'☀ กะเช้า 07:00–19:00 น.'}</div>`;
 
   ['rn','pn','aux'].forEach(role=>{
     const sid        = `${role}-${shift}`;
@@ -526,11 +526,11 @@ function buildShiftHTML(shift, data){
     if(!r.hasRadio){
       html += `<tr class="criteria-header"><td colspan="3">${r.label}</td></tr>`;
     } else {
-      const darkStyle = r.dark ? 'background:#e4ecf8;font-weight:600;' : '';
+      const darkStyle = r.dark ? 'background:#e4ecf8;color:var(--text,#1a2340);font-weight:600;' : '';
       html += `<tr>
         <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;">${r.label}</td>
         <td style="${darkStyle}border:1px solid var(--border);padding:10px;text-align:center;vertical-align:middle;">
-          <input type="radio" name="${shift}_${r.k}" value="no" checked onchange="toggleYes('${shift}_${r.k}',false)" style="width:17px;height:17px;cursor:pointer">
+          <input type="radio" name="${shift}_${r.k}" value="no" checked onchange="toggleYes('${shift}_${r.k}',false)" style="width:17px;height:17px;cursor:pointer;">
         </td>
         <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;vertical-align:top;">
           <input type="radio" name="${shift}_${r.k}" value="yes" onchange="toggleYes('${shift}_${r.k}',true)" style="width:17px;height:17px;cursor:pointer;margin-right:6px;">
@@ -566,7 +566,7 @@ function buildRow(num, sid, filteredStaff){
   return `<tr>
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
-    <td><input class="ci" type="text" data-f="room" placeholder="ทีม/ห้อง"></td>
+    <td><input class="ci" type="text" data-f="room" placeholder="ห้อง"></td>
     <td><input class="ci" type="text" data-f="duty" placeholder="หน้าที่พิเศษ"></td>
     <td><input class="ci" type="text" data-f="sign" placeholder="ลายเซ็น"></td>
     <td><input class="ci" type="text" data-f="in"   placeholder="เวลา"></td>
