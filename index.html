@@ -29,18 +29,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 .tbtn-red{background:var(--accent);color:#fff}.tbtn-red:hover{filter:brightness(1.1)}
 .tbtn-ghost{background:rgba(255,255,255,.13);color:#fff;border:1.5px solid rgba(255,255,255,.38)}.tbtn-ghost:hover{background:rgba(255,255,255,.22)}
 
-/* ─── CBAR (date / shift) ─── */
+/* ─── CBAR ─── */
 .cbar{background:#fff;border-bottom:2px solid var(--border);padding:16px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap}
 .clabel{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
 input[type=date],select{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
 input[type=date]:focus,select:focus{border-color:var(--blue)}
-.shift-tabs{display:flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
-.stab{padding:10px 32px;font-size:15px;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);border:none;font-family:inherit;transition:.18s;border-right:1px solid var(--border)}
-.stab:last-child{border-right:none}
-.stab.active-day{background:var(--blue);color:#fff}
-.stab.active-night{background:var(--night);color:#fff}
 
-/* ─── HISTORY PANEL (NEW) ─── */
+/* shift buttons */
+.shift-btn{padding:10px 26px;border-radius:7px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.18s;border:1.5px solid var(--border);background:#f5f7fc;color:var(--muted)}
+.shift-btn.active-day{background:var(--blue);color:#fff;border-color:var(--blue)}
+.shift-btn.active-night{background:var(--night);color:#fff;border-color:var(--night)}
+
+/* ─── HISTORY PANEL ─── */
 .hist-panel{background:var(--hist-bg);border:1.5px solid var(--hist-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-left:auto}
 .hist-panel-label{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;display:flex;align-items:center;gap:5px}
 .hist-date-input{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--hist-border);border-radius:7px;padding:9px 14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
@@ -102,6 +102,8 @@ body.hist-readonly .add-row-btn{display:none}
 .inc-table td{border:1px solid var(--border);padding:10px 16px;vertical-align:top}
 .inc-table td.q{width:65%}
 .inc-table .dark-row td{background:#e4ecf8;font-weight:600}
+/* Criteria header row — สีเข้มเหมือน title ไม่มี radio */
+.inc-table .criteria-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:11px 16px;border:1px solid #1a2a5e}
 .radio-group{display:flex;gap:22px;align-items:center}
 .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;white-space:nowrap}
 .radio-group input[type=radio]{width:17px;height:17px;cursor:pointer}
@@ -112,7 +114,10 @@ body.hist-readonly .add-row-btn{display:none}
 .occ-table{width:100%;border-collapse:collapse;font-size:15px}
 .occ-table th{background:#2c3e6b;color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .occ-table td{border:1px solid var(--border);padding:8px 12px}
-.occ-table td input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
+/* ลดช่องชื่อ เพิ่มช่อง HN */
+.occ-table td.occ-label{width:28%}
+.occ-table td.occ-hn{width:22%}
+.occ-table td.occ-hn input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
 
 /* ─── MODALS ─── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
@@ -172,22 +177,22 @@ body.hist-readonly .add-row-btn{display:none}
     <span class="clabel">วันที่</span>
     <input type="date" id="sel-date" onchange="onDateChange()">
   </div>
-  <!-- กะ -->
+  <!-- กะ — แยกปุ่ม 2 ปุ่ม ไม่มี tab รวม -->
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">กะ</span>
-    <div class="shift-tabs">
-      <button class="stab active-day" id="tab-day" onclick="setShift('day')">☀ กะเช้า 07:00–19:00</button>
-      <button class="stab" id="tab-night" onclick="setShift('night')">🌙 กะดึก 19:00–07:00</button>
+    <div style="display:flex;gap:8px">
+      <button class="shift-btn active-day" id="tab-day" onclick="setShift('day')">☀ 07:00–19:00</button>
+      <button class="shift-btn" id="tab-night" onclick="setShift('night')">🌙 19:00–07:00</button>
     </div>
   </div>
 
-  <!-- HISTORY PANEL (redesigned) -->
+  <!-- HISTORY PANEL -->
   <div class="hist-panel">
     <div class="hist-panel-label">🕘 ดูย้อนหลัง</div>
     <div class="hist-divider"></div>
     <input type="date" id="hist-date" class="hist-date-input">
     <div class="hist-shift-group">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">☀ เช้า</button>
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">07.00 - 19.00</button>
       <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 ดึก</button>
     </div>
     <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
@@ -303,22 +308,23 @@ function saveStaff(){ localStorage.setItem('w15e_staff', JSON.stringify(staff));
 // ════════════════════════════════════════
 let currentShift = 'day', currentDate = '';
 let histSelectedShift = 'day';
-let isHistMode  = false;   // กำลังดูย้อนหลัง?
-let isEditMode  = false;   // กำลังแก้ไขย้อนหลัง?
+let isHistMode  = false;
+let isEditMode  = false;
 let histViewDate  = '';
 let histViewShift = '';
 
+// hasRadio: false = เป็นหัวข้อสีเข้ม ไม่มีปุ่ม No/Yes
 const INC_ROWS = [
-  {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                              dark:false},
-  {k:'equipment', label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์',                                 dark:false},
-  {k:'supplies',  label:'Supplies – เวชภัณฑ์',                                                   dark:false},
-  {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                 dark:false},
-  {k:'experience',label:'Experience – ความฝึงชาญ / คำดี / คำบม',                                dark:false},
-  {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)',  dark:false},
-  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                  dark:true},
-  {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                              dark:true},
-  {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                  dark:true},
-  {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                      dark:true},
+  {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                              dark:false, hasRadio:true},
+  {k:'equipment', label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์',                                 dark:false, hasRadio:true},
+  {k:'supplies',  label:'Supplies – เวชภัณฑ์',                                                   dark:false, hasRadio:true},
+  {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                 dark:false, hasRadio:true},
+  {k:'experience',label:'Experience – ความพึงพอใจ / คำติ / คำชม',                               dark:false, hasRadio:true},
+  {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)',  dark:false, hasRadio:true},
+  {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                  dark:true,  hasRadio:false},
+  {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                              dark:true,  hasRadio:true},
+  {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                  dark:true,  hasRadio:true},
+  {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                      dark:true,  hasRadio:true},
 ];
 const OCC1 = [{k:'med',label:'Medication Error ทุกมิติ'},{k:'fall',label:'Fall'},{k:'refer',label:'Refer out'}];
 const OCC2 = [{k:'transfer',label:'Transfer to higher level of care'},{k:'death',label:'Death'}];
@@ -349,7 +355,6 @@ async function jumpToHist(){
   histViewDate  = histDate;
   histViewShift = histSelectedShift;
 
-  // ลองดึง Firebase ก่อน แล้ว fallback local
   let data = null;
   if(db){
     try{
@@ -359,7 +364,6 @@ async function jumpToHist(){
   }
   if(!data) data = loadLocalByKey(docKey(histDate, histSelectedShift));
 
-  // สลับ view ไปวันนั้น (แต่ไม่แตะ currentDate/currentShift)
   isHistMode = true;
   isEditMode = false;
   document.body.classList.add('hist-readonly');
@@ -367,14 +371,14 @@ async function jumpToHist(){
   const banner = document.getElementById('hist-banner');
   banner.classList.add('show');
   document.getElementById('hist-banner-info').textContent =
-    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00':'🌙 กะดึก 19:00–07:00') + ' — ' + thaiDate(histDate);
+    (histSelectedShift==='day'?'07:00–19:00':'19:00–07:00') + ' — ' + thaiDate(histDate);
 
   document.getElementById('hist-edit-btn').textContent   = '✏️ แก้ไข';
   document.getElementById('hist-edit-btn').className     = 'hist-action-btn hist-edit-btn';
   document.getElementById('hist-save-btn').style.display = 'none';
 
   document.getElementById('page-title').textContent =
-    (histSelectedShift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(histDate);
+    (histSelectedShift==='day'?' 07:00–19:00 ':' 19:00–07:00 ')+' — '+thaiDate(histDate);
 
   document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, data);
   restoreData(data, histSelectedShift);
@@ -398,7 +402,6 @@ function toggleEditMode(){
 }
 
 async function saveHistEdits(){
-  // บันทึกทับข้อมูลเดิมของวันย้อนหลัง
   const origDate  = currentDate;
   const origShift = currentShift;
   currentDate  = histViewDate;
@@ -416,7 +419,6 @@ async function saveHistEdits(){
   } else {
     showToast('💾 บันทึก Local เรียบร้อย','ok');
   }
-  // ล็อกกลับ
   toggleEditMode();
 }
 
@@ -425,15 +427,13 @@ function exitHistMode(){
   isEditMode = false;
   document.body.classList.remove('hist-readonly');
   document.getElementById('hist-banner').classList.remove('show');
-  // คืนค่า view ปัจจุบัน
   renderPage();
 }
 
-// ─── DELETE ───
 function confirmDeleteHist(){
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>` +
-    `กะ: <strong>${histViewShift==='day'?'☀ กะเช้า':'🌙 กะดึก'}</strong><br><br>` +
+    `กะ: <strong>${histViewShift==='day'?' 07.00-19.00 ':'19.00-07.00'}</strong><br><br>` +
     `ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`;
   document.getElementById('confirm-overlay').classList.add('open');
 }
@@ -470,16 +470,18 @@ function onDateChange(){ currentDate = document.getElementById('sel-date').value
 
 function setShift(shift, skipRender){
   currentShift = shift;
-  document.getElementById('tab-day').className   = 'stab' + (shift==='day'  ?' active-day':'');
-  document.getElementById('tab-night').className = 'stab' + (shift==='night'?' active-night':'');
+  const dayBtn   = document.getElementById('tab-day');
+  const nightBtn = document.getElementById('tab-night');
+  dayBtn.className   = 'shift-btn' + (shift==='day'   ? ' active-day'   : '');
+  nightBtn.className = 'shift-btn' + (shift==='night' ? ' active-night' : '');
   if(!skipRender) renderPage();
 }
 
 function renderPage(preloadData){
-  if(isHistMode){ return; } // อย่ารบกวน hist view
+  if(isHistMode){ return; }
   const shift = currentShift;
   document.getElementById('page-title').textContent =
-    (shift==='day'?'☀ กะเช้า 07:00–19:00 น.':'🌙 กะดึก 19:00–07:00 น.')+' — '+thaiDate(currentDate);
+    (shift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(currentDate);
   const data = preloadData || loadLocal();
   document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
   restoreData(data, shift);
@@ -489,10 +491,10 @@ function buildShiftHTML(shift, data){
   const isNight  = shift==='night';
   const hClass   = isNight?'night':'day';
   const thClass  = isNight?'night-tbl':'';
-  const roleLabel = r => r==='rn'?'พยาบาลวิชาชีพ (RN)' : r==='pn'?'พยาบาลเทคนิค (PN)' : 'เดขา / ผู้ช่วย';
+  const roleLabel = r => r==='rn'?'RN' : r==='pn'?'PN' : 'Admin Officer';
   const roleMap   = {rn:'RN', pn:'PN', aux:'AUX'};
 
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 กะดึก 19:00–07:00 น.':'☀ กะเช้า 07:00–19:00 น.'}</div>`;
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?' 19:00–07:00 น.':' 07:00–19:00 น.'}</div>`;
 
   ['rn','pn','aux'].forEach(role=>{
     const sid        = `${role}-${shift}`;
@@ -503,8 +505,10 @@ function buildShiftHTML(shift, data){
       <button class="add-row-btn" onclick="addRow('${sid}')" style="padding:5px 16px;border-radius:6px;border:1.5px solid var(--blue);background:white;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มแถว</button>
     </div>
     <table class="tbl ${thClass}"><thead><tr>
-      <th style="width:42px">#</th><th>ชื่อ-สกุล</th>
-      <th style="width:80px">ห้อง</th><th>หน้าที่พิเศษ</th>
+      <th style="width:42px">#</th>
+      <th style="width:20%">ชื่อ-สกุล</th>
+      <th style="width:160px">ห้อง</th>
+      <th>หน้าที่พิเศษ</th>
       <th style="width:110px">ลายเซ็น</th>
       <th style="width:70px">เข้า</th><th style="width:70px">ออก</th>
     </tr></thead><tbody id="${sid}">`;
@@ -512,30 +516,44 @@ function buildShiftHTML(shift, data){
     html += `</tbody></table>`;
   });
 
-  html += `<div class="inc-wrap"><div class="inc-title">📋 เรื่องแจ้ง / รายงานเหตุการณ์</div><table class="inc-table">`;
+  html += `<div class="inc-wrap"><div class="inc-title">📋 เรื่องแจ้ง / รายงานเหตุการณ์</div><table class="inc-table">
+    <thead><tr>
+      <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:left;font-size:14px;font-weight:600;border:1px solid #2a4a9a;width:65%">รายการ</th>
+      <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:center;font-size:14px;font-weight:600;border:1px solid #2a4a9a;width:70px">No</th>
+      <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:center;font-size:14px;font-weight:600;border:1px solid #2a4a9a;">Yes – ระบุรายละเอียด</th>
+    </tr></thead><tbody>`;
   INC_ROWS.forEach(r=>{
-    html += `<tr class="${r.dark?'dark-row':''}">
-      <td class="q">${r.label}</td>
-      <td>
-        <div class="radio-group">
-          <label><input type="radio" name="${shift}_${r.k}" value="no" checked onchange="toggleYes('${shift}_${r.k}',false)"> No</label>
-          <label><input type="radio" name="${shift}_${r.k}" value="yes" onchange="toggleYes('${shift}_${r.k}',true)"> Yes ระบุสิ่งๆ</label>
-        </div>
-        <div class="yes-box" id="yb_${shift}_${r.k}"><textarea placeholder="ระบุรายละเอียด..." id="yt_${shift}_${r.k}"></textarea></div>
-      </td></tr>`;
+    if(!r.hasRadio){
+      html += `<tr class="criteria-header"><td colspan="3">${r.label}</td></tr>`;
+    } else {
+      const darkStyle = r.dark ? 'background:#e4ecf8;font-weight:600;' : '';
+      html += `<tr>
+        <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;">${r.label}</td>
+        <td style="${darkStyle}border:1px solid var(--border);padding:10px;text-align:center;vertical-align:middle;">
+          <input type="radio" name="${shift}_${r.k}" value="no" checked onchange="toggleYes('${shift}_${r.k}',false)" style="width:17px;height:17px;cursor:pointer">
+        </td>
+        <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;vertical-align:top;">
+          <input type="radio" name="${shift}_${r.k}" value="yes" onchange="toggleYes('${shift}_${r.k}',true)" style="width:17px;height:17px;cursor:pointer;margin-right:6px;">
+          <div class="yes-box" id="yb_${shift}_${r.k}" style="margin-top:6px"><textarea placeholder="ระบุรายละเอียด..." id="yt_${shift}_${r.k}" style="width:100%;min-height:40px;resize:vertical;border:1.5px solid var(--blue-mid);border-radius:5px;padding:6px 10px;font-family:'Sarabun',sans-serif;font-size:14px;background:#f0f5ff;outline:none"></textarea></div>
+        </td>
+      </tr>`;
+    }
   });
-  html += `</table>`;
+  html += `</tbody></table>`;
 
+  // Occurrence — ช่องชื่อแคบลง ช่อง HN กว้างขึ้น
   html += `<div class="occ-wrap"><table class="occ-table">
-    <tr><th colspan="2">Occurrence ที่สำคัญ</th><th style="width:130px">ระบุ HN</th>
-        <th colspan="2">Occurrence ที่สำคัญ</th><th style="width:130px">ระบุ HN</th></tr>`;
+    <tr>
+      <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
+      <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
+    </tr>`;
   for(let i=0;i<Math.max(OCC1.length,OCC2.length);i++){
     const a=OCC1[i], b=OCC2[i];
     html += `<tr>
-      <td colspan="2">${a?a.label:''}</td>
-      <td><input type="text" placeholder="HN" id="oc_${shift}_${a?a.k:'na'+i}"></td>
-      <td colspan="2">${b?b.label:''}</td>
-      <td><input type="text" placeholder="HN" id="oc_${shift}_${b?b.k:'nb'+i}"></td>
+      <td class="occ-label">${a?a.label:''}</td>
+      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${a?a.k:'na'+i}"></td>
+      <td class="occ-label">${b?b.label:''}</td>
+      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${b?b.k:'nb'+i}"></td>
     </tr>`;
   }
   html += `</table></div></div></div>`;
@@ -548,7 +566,7 @@ function buildRow(num, sid, filteredStaff){
   return `<tr>
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
-    <td><input class="ci" type="text" data-f="room" placeholder="ห้อง"></td>
+    <td><input class="ci" type="text" data-f="room" placeholder="ทีม/ห้อง"></td>
     <td><input class="ci" type="text" data-f="duty" placeholder="หน้าที่พิเศษ"></td>
     <td><input class="ci" type="text" data-f="sign" placeholder="ลายเซ็น"></td>
     <td><input class="ci" type="text" data-f="in"   placeholder="เวลา"></td>
@@ -583,6 +601,7 @@ function collectData(){
   });
   out.incidents = {};
   INC_ROWS.forEach(r=>{
+    if(!r.hasRadio) return;
     const chk = document.querySelector(`input[name="${shift}_${r.k}"]:checked`);
     const txt = document.getElementById(`yt_${shift}_${r.k}`);
     out.incidents[r.k] = {v:chk?chk.value:'no', t:txt?txt.value:''};
@@ -607,6 +626,7 @@ function restoreData(data, shift){
     });
   });
   if(data.incidents) INC_ROWS.forEach(r=>{
+    if(!r.hasRadio) return;
     const inc   = data.incidents[r.k]; if(!inc) return;
     const radio = document.querySelector(`input[name="${shift}_${r.k}"][value="${inc.v}"]`);
     if(radio){ radio.checked=true; toggleYes(`${shift}_${r.k}`, inc.v==='yes'); }
