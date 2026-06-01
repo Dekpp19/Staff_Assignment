@@ -17,6 +17,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:16px;min-height:100vh}
 
+
+
 .topbar{background:var(--blue);color:#fff;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.22)}
 .brand{display:flex;align-items:center;gap:16px}
 .logo{width:46px;height:46px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);font-size:13px;line-height:1.3;text-align:center}
@@ -61,7 +63,6 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 .hist-del-btn{background:var(--accent);color:#fff}.hist-del-btn:hover{filter:brightness(1.1)}
 .hist-save-btn{background:#1a7a3c;color:#fff}.hist-save-btn:hover{filter:brightness(1.1)}
 
-/* loading spinner — ไม่ใช้ overlay บัง UI แล้ว ใช้ toast แทน */
 .loading-bar{display:none;background:var(--blue);color:#fff;text-align:center;padding:8px;font-size:14px;font-weight:600}
 .loading-bar.show{display:block}
 
@@ -138,10 +139,8 @@ body.hist-readonly .add-row-btn{display:none}
 </head>
 <body>
 
-<!-- loading bar (ไม่บัง UI) -->
-<div class="loading-bar" id="loading-bar">⏳ กำลังโหลดข้อมูลจาก Firebase...</div>
+<div class="loading-bar" id="loading-bar">⏳ กำลังโหลดข้อมูล...</div>
 
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="brand">
     <div class="logo">BH<br>PYA</div>
@@ -157,7 +156,6 @@ body.hist-readonly .add-row-btn{display:none}
   </div>
 </div>
 
-<!-- CONTROL BAR -->
 <div class="cbar">
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">วันที่</span>
@@ -166,8 +164,8 @@ body.hist-readonly .add-row-btn{display:none}
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">เวลา</span>
     <div style="display:flex;gap:8px">
-      <button class="shift-btn active-day" id="tab-day" onclick="setShift('day')"> 07:00–19:00</button>
-      <button class="shift-btn" id="tab-night" onclick="setShift('night')"> 19:00–07:00</button>
+      <button class="shift-btn active-day" id="tab-day" onclick="setShift('day')">☀️ 07:00–19:00</button>
+      <button class="shift-btn" id="tab-night" onclick="setShift('night')">🌙 19:00–07:00</button>
     </div>
   </div>
   <div class="hist-panel">
@@ -175,14 +173,13 @@ body.hist-readonly .add-row-btn{display:none}
     <div class="hist-divider"></div>
     <input type="date" id="hist-date" class="hist-date-input">
     <div class="hist-shift-group">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')" 07:00–19:00</button>
-      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')"> 19:00–07:00</button>
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">☀️ 07:00–19:00</button>
+      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 19:00–07:00</button>
     </div>
     <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
   </div>
 </div>
 
-<!-- HISTORY BANNER -->
 <div class="hist-banner" id="hist-banner">
   <div class="hist-banner-text">
     <span class="hist-banner-badge">📅 ย้อนหลัง</span>
@@ -196,7 +193,6 @@ body.hist-readonly .add-row-btn{display:none}
   </div>
 </div>
 
-<!-- MAIN -->
 <div class="page">
   <div class="page-title" id="page-title">—</div>
   <div id="shift-content"></div>
@@ -244,9 +240,9 @@ body.hist-readonly .add-row-btn{display:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // FIREBASE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 const FB_CONFIG = {
   apiKey:            "AIzaSyD2-2kU0LXgirj4oSdK3hcSRAhAjtGJhyc",
   authDomain:        "staff-assignment-ba451.firebaseapp.com",
@@ -260,15 +256,17 @@ let db = null;
 try {
   firebase.initializeApp(FB_CONFIG);
   db = firebase.database();
-  console.log('✅ Firebase connected');
-} catch(e) { console.warn('⚠ Firebase init error:', e.message); }
+  console.log('Firebase connected');
+} catch(e) {
+  console.warn('Firebase init error:', e.message);
+}
 
 async function fbGet(key){
   if(!db) return null;
   try {
     const snap = await db.ref('ward15e/'+key).get();
     return snap.exists() ? snap.val() : null;
-  } catch(e) { console.warn('fbGet error:', e); return null; }
+  } catch(e) { return null; }
 }
 async function fbSet(key, data){
   if(!db) throw new Error('ไม่ได้เชื่อมต่อ Firebase');
@@ -279,9 +277,104 @@ async function fbDelete(key){
   await db.ref('ward15e/'+key).remove();
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
+// REAL-TIME LISTENER  ← แก้ไขหลัก
+// ══════════════════════════════════════════════════════
+let _rtRef       = null;
+let _rtKey       = null;
+let _isSaving    = false;    // true เฉพาะช่วง fbSet กำลังรัน
+let _skipNext    = false;    // กัน echo ของตัวเอง
+let _initialLoad = true;     // รอบแรกหลัง subscribe ไม่ต้อง toast
+
+function subscribeRealtime(date, shift) {
+  const key = docKey(date, shift);
+  if(_rtKey === key) return;       // same key → ไม่ต้องทำซ้ำ
+  unsubscribeRealtime();
+  if(!db) return;
+  _rtKey = key;
+  _initialLoad = true;
+  _rtRef = db.ref('ward15e/'+key);
+  _rtRef.on('value', snap => {
+    // รอบแรก (initial load) → ใช้แค่ข้อมูล ไม่ toast
+    if(_initialLoad) { _initialLoad = false; }
+    // ถ้าอยู่ใน histMode ไม่ทำอะไร
+    if(isHistMode) return;
+    // ถ้าเราเพิ่งบันทึกเอง → ข้ามรอบนี้ (echo กลับมาจาก Firebase)
+    if(_skipNext) { _skipNext = false; return; }
+    const data = snap.exists() ? snap.val() : null;
+    if(data) {
+      // ── SMART MERGE: อัปเดตเฉพาะ field ที่ focus ไม่อยู่ ──
+      mergeRemoteData(data, shift);
+      saveLocal(data);
+      setRtBadge('live');
+      showToast('🔄 อัปเดตจากเครื่องอื่น','info');
+    }
+  }, e => {
+    console.warn('RT listener error:', e);
+    setRtBadge('offline');
+  });
+}
+
+function unsubscribeRealtime() {
+  if(_rtRef) {
+    _rtRef.off('value');
+    _rtRef = null;
+    _rtKey = null;
+  }
+}
+
+// ── Smart merge: อัปเดต field ที่ไม่มี focus ──
+// ป้องกัน cursor หลุดขณะพิมพ์
+function mergeRemoteData(data, shift) {
+  const focused = document.activeElement;
+  // อัป staff rows
+  ['rn','pn','aux'].forEach(role => {
+    const rows  = data[role]||[];
+    const tbody = document.getElementById(`${role}-${shift}`);
+    if(!tbody) return;
+    // ถ้าจำนวนแถวต่างกัน → rebuild tbody ทั้งหมด แต่ป้องกัน focused el
+    if(rows.length > tbody.rows.length) {
+      const roleMap = {rn:'RN',pn:'PN',aux:'AUX'};
+      const filtered = staff.filter(s=>s.role===roleMap[role]);
+      while(tbody.rows.length < rows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = buildRowInner(tbody.rows.length+1, `${role}-${shift}`, filtered);
+        tbody.appendChild(tr);
+      }
+    }
+    rows.forEach((rd,i)=>{
+      const tr = tbody.rows[i]; if(!tr) return;
+      tr.querySelectorAll('[data-f]').forEach(el=>{
+        if(el === focused) return;           // กำลังพิมพ์อยู่ → ข้าม
+        if(rd[el.dataset.f] !== undefined) el.value = rd[el.dataset.f]||'';
+      });
+    });
+  });
+  // incidents
+  if(data.incidents) INC_ROWS.forEach(r=>{
+    if(!r.hasRadio) return;
+    const inc = data.incidents[r.k]; if(!inc) return;
+    const radio = document.querySelector(`input[name="${shift}_${r.k}"][value="${inc.v}"]`);
+    if(radio && !radio.contains(focused)) {
+      radio.checked = true;
+      toggleYes(`${shift}_${r.k}`, inc.v==='yes');
+    }
+    const txt = document.getElementById(`yt_${shift}_${r.k}`);
+    if(txt && txt !== focused && inc.t !== undefined) txt.value = inc.t;
+  });
+  // occurrences
+  if(data.occurrences) [...OCC1,...OCC2].forEach(r=>{
+    const el = document.getElementById(`oc_${shift}_${r.k}`);
+    if(el && el !== focused && data.occurrences[r.k] !== undefined)
+      el.value = data.occurrences[r.k];
+  });
+}
+
+
+
+// ══════════════════════════════════════════════════════
 // STAFF
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || [
   {id:'s1',  name:'กนกวรรณ RN3*', role:'RN'},
   {id:'s2',  name:'ศิริวรรณ RN3',  role:'RN'},
@@ -300,9 +393,9 @@ let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || [
 ];
 function saveStaff(){ localStorage.setItem('w15e_staff', JSON.stringify(staff)); }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 let currentShift = 'day', currentDate = '';
 let histSelectedShift = 'day';
 let isHistMode = false, isEditMode = false;
@@ -332,17 +425,11 @@ function thaiDate(str){
   return new Date(str+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 }
 function docKey(date,shift){ return `${date.replace(/-/g,'')}_${shift}`; }
+function showLoading(show){ document.getElementById('loading-bar').classList.toggle('show', show); }
 
-// ══════════════════════════════
-// LOADING BAR (ไม่บัง UI)
-// ══════════════════════════════
-function showLoading(show){
-  document.getElementById('loading-bar').classList.toggle('show', show);
-}
-
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // INIT
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function init(){
   const today = todayStr();
   document.getElementById('sel-date').value  = today;
@@ -351,35 +438,23 @@ function init(){
   currentShift = 'day';
   setHistShift('day');
   updateShiftButtons('day');
-  // render local ก่อนทันที แล้วค่อยดึง Firebase ใส่
   const local = loadLocal();
-  document.getElementById('page-title').textContent = ' 07:00–19:00 น. — ' + thaiDate(today);
+  document.getElementById('page-title').textContent = '☀️ 07:00–19:00 น. — ' + thaiDate(today);
   document.getElementById('shift-content').innerHTML = buildShiftHTML('day', local);
   restoreData(local, 'day');
-  // ดึง Firebase แบบ async ไม่บล็อก UI
-  loadFromFirebase(today, 'day');
+  subscribeRealtime(today, 'day');
 }
 
-// ดึงข้อมูลจาก Firebase แล้ว refresh หน้าเงียบๆ
-async function loadFromFirebase(date, shift){
-  if(!db) return;
-  showLoading(true);
-  const data = await fbGet(docKey(date, shift));
-  showLoading(false);
-  if(!data) return; // ไม่มีข้อมูลใน Firebase ก็ใช้ local ที่ render ไปแล้ว
-  // มีข้อมูล Firebase → rebuild
-  document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
-  restoreData(data, shift);
-}
 
-// ══════════════════════════════
+
+// ══════════════════════════════════════════════════════
 // DATE / SHIFT CHANGE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function onDateChange(){
   if(isHistMode) return;
   currentDate = document.getElementById('sel-date').value;
   renderPageLocal();
-  loadFromFirebase(currentDate, currentShift);
+  subscribeRealtime(currentDate, currentShift);  // subscribe ใหม่ทันที
 }
 
 function setShift(shift){
@@ -387,7 +462,7 @@ function setShift(shift){
   currentShift = shift;
   updateShiftButtons(shift);
   renderPageLocal();
-  loadFromFirebase(currentDate, currentShift);
+  subscribeRealtime(currentDate, currentShift);  // subscribe ใหม่ทันที
 }
 
 function updateShiftButtons(shift){
@@ -395,19 +470,18 @@ function updateShiftButtons(shift){
   document.getElementById('tab-night').className = 'shift-btn' + (shift==='night' ? ' active-night' : '');
 }
 
-// render จาก local storage ก่อน (ไม่ async ไม่บล็อก)
 function renderPageLocal(){
   if(isHistMode) return;
-  const label = (currentShift==='day' ? ' 07:00–19:00 น.' : ' 19:00–07:00 น.') + ' — ' + thaiDate(currentDate);
+  const label = (currentShift==='day' ? '☀️ 07:00–19:00 น.' : '🌙 19:00–07:00 น.') + ' — ' + thaiDate(currentDate);
   document.getElementById('page-title').textContent = label;
   const local = loadLocal();
   document.getElementById('shift-content').innerHTML = buildShiftHTML(currentShift, local);
   restoreData(local, currentShift);
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // HISTORY
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function setHistShift(shift){
   histSelectedShift = shift;
   document.getElementById('hbtn-day').className   = 'hsbtn' + (shift==='day'   ? ' hs-active-day'   : '');
@@ -422,8 +496,9 @@ async function jumpToHist(){
   isHistMode = true;
   isEditMode = false;
   document.body.classList.add('hist-readonly');
+  unsubscribeRealtime();   // หยุด listen ขณะดูย้อนหลัง
 
-  const shiftLabel = histSelectedShift==='day' ? ' 07:00–19:00' : ' 19:00–07:00';
+  const shiftLabel = histSelectedShift==='day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
   document.getElementById('hist-banner').classList.add('show');
   document.getElementById('hist-banner-info').textContent = shiftLabel + ' — ' + thaiDate(histDate);
   document.getElementById('page-title').textContent = shiftLabel + ' น. — ' + thaiDate(histDate);
@@ -431,12 +506,10 @@ async function jumpToHist(){
   document.getElementById('hist-edit-btn').className   = 'hist-action-btn hist-edit-btn';
   document.getElementById('hist-save-btn').style.display = 'none';
 
-  // แสดง local ก่อน
   const local = loadLocalByKey(docKey(histDate, histSelectedShift));
   document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, local);
   restoreData(local, histSelectedShift);
 
-  // ดึง Firebase
   showLoading(true);
   const fbData = await fbGet(docKey(histDate, histSelectedShift));
   showLoading(false);
@@ -488,11 +561,11 @@ function exitHistMode(){
   document.body.classList.remove('hist-readonly');
   document.getElementById('hist-banner').classList.remove('show');
   renderPageLocal();
-  loadFromFirebase(currentDate, currentShift);
+  subscribeRealtime(currentDate, currentShift);  // resume listening
 }
 
 function confirmDeleteHist(){
-  const s = histViewShift==='day' ? ' 07:00–19:00' : ' 19:00–07:00';
+  const s = histViewShift==='day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>กะ: <strong>${s}</strong><br><br>ข้อมูลจะถูกลบถาวร`;
   document.getElementById('confirm-overlay').classList.add('open');
@@ -509,16 +582,16 @@ async function doDelete(){
   exitHistMode();
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // BUILD HTML
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function buildShiftHTML(shift, data){
   const isNight = shift==='night';
   const hClass  = isNight ? 'night' : 'day';
   const thClass = isNight ? 'night-tbl' : '';
   const roleLabel = r => r==='rn'?'RN':r==='pn'?'PN':'Admin Officer';
   const roleMap   = {rn:'RN',pn:'PN',aux:'AUX'};
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?' 19:00–07:00 น.':' 07:00–19:00 น.'}</div>`;
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 19:00–07:00 น.':'☀️ 07:00–19:00 น.'}</div>`;
   ['rn','pn','aux'].forEach(role=>{
     const sid       = `${role}-${shift}`;
     const filtered  = staff.filter(s=>s.role===roleMap[role]);
@@ -585,18 +658,21 @@ function buildShiftHTML(shift, data){
   return html;
 }
 
-function buildRow(num, sid, filteredStaff){
+function buildRowInner(num, sid, filteredStaff){
   let opts = '<option value="">— เลือก —</option>';
   filteredStaff.forEach(s=>{ opts += `<option value="${s.name}">${s.name}</option>`; });
-  return `<tr>
+  return `
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
     <td><input class="ci" type="text" data-f="room" placeholder="ทีม/ห้อง"></td>
     <td><input class="ci" type="text" data-f="duty" placeholder="หน้าที่พิเศษ"></td>
     <td><input class="ci" type="text" data-f="sign" placeholder="ลายเซ็น"></td>
     <td><input class="ci" type="text" data-f="in"   placeholder="เวลา"></td>
-    <td><input class="ci" type="text" data-f="out"  placeholder="เวลา"></td>
-  </tr>`;
+    <td><input class="ci" type="text" data-f="out"  placeholder="เวลา"></td>`;
+}
+
+function buildRow(num, sid, filteredStaff){
+  return `<tr>${buildRowInner(num, sid, filteredStaff)}</tr>`;
 }
 
 function addRow(sid){
@@ -604,7 +680,7 @@ function addRow(sid){
   const role    = sid.split('-')[0];
   const filtered= staff.filter(s=>s.role===({rn:'RN',pn:'PN',aux:'AUX'})[role]);
   const tr      = document.createElement('tr');
-  tr.innerHTML  = buildRow(tbody.rows.length+1, sid, filtered).replace(/^<tr>/,'').replace(/<\/tr>$/,'');
+  tr.innerHTML  = buildRowInner(tbody.rows.length+1, sid, filtered);
   tbody.appendChild(tr);
 }
 
@@ -613,9 +689,9 @@ function toggleYes(key,show){
   if(el) el.classList.toggle('show',show);
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // COLLECT / RESTORE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function collectData(){
   const shift = isHistMode ? histViewShift : currentShift;
   const out   = {date: isHistMode ? histViewDate : currentDate, shift};
@@ -667,9 +743,9 @@ function restoreData(data, shift){
   });
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // LOCAL STORAGE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function loadLocal(){ return loadLocalByKey(docKey(currentDate, currentShift)); }
 function loadLocalByKey(key){
   try{ return JSON.parse(localStorage.getItem('w15e_data_'+key)); }
@@ -677,26 +753,29 @@ function loadLocalByKey(key){
 }
 function saveLocal(data){ localStorage.setItem('w15e_data_'+docKey(data.date,data.shift), JSON.stringify(data)); }
 
-// ══════════════════════════════
-// SAVE
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
+// SAVE (manual)
+// ══════════════════════════════════════════════════════
 async function saveData(){
   const data = collectData();
   saveLocal(data);
-  showLoading(true);
+  setRtBadge('syncing');
+  _skipNext = true;
+  _isSaving = true;
   try {
     await fbSet(docKey(data.date,data.shift), data);
-    showLoading(false);
     showToast('✅ บันทึก Firebase เรียบร้อย','ok');
   } catch(e) {
-    showLoading(false);
+    _skipNext = false;
     showToast('⚠️ บันทึก Local เท่านั้น ('+e.message+')','err');
+  } finally {
+    _isSaving = false;
   }
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // STAFF MODAL
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function openModal(){ renderStaffUI(); document.getElementById('staff-overlay').classList.add('open'); }
 function closeModal(){ document.getElementById('staff-overlay').classList.remove('open'); }
 function renderStaffUI(){
@@ -711,22 +790,22 @@ function addStaff(){
   if(!name) return;
   staff.push({id:'S'+Date.now(), name, role});
   saveStaff(); renderStaffUI();
-  if(!isHistMode){ renderPageLocal(); loadFromFirebase(currentDate, currentShift); }
+  if(!isHistMode){ renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
   document.getElementById('new-name').value = '';
   if(db) db.ref('ward15e_staff/list').set({staff});
 }
 function delStaff(id){
   staff = staff.filter(s=>s.id!==id);
   saveStaff(); renderStaffUI();
-  if(!isHistMode){ renderPageLocal(); loadFromFirebase(currentDate, currentShift); }
+  if(!isHistMode){ renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
   if(db) db.ref('ward15e_staff/list').set({staff});
 }
 document.getElementById('staff-overlay').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
 document.getElementById('confirm-overlay').addEventListener('click',function(e){ if(e.target===this) closeConfirm(); });
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // TOAST
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 function showToast(msg,type){
   const el = document.getElementById('toast');
   el.textContent=msg; el.className=type;
@@ -734,9 +813,9 @@ function showToast(msg,type){
   el._t=setTimeout(()=>{ el.className=''; },3200);
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 // START
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════
 init();
 </script>
 </body>
