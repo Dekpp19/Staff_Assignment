@@ -67,6 +67,13 @@ input[type=date]:focus,select:focus{border-color:var(--blue)}
 .hist-back-btn{background:#eee;color:#333;border:1.5px solid #ccc !important;border:none}.hist-back-btn:hover{background:#ddd}
 .hist-save-btn{background:#1a7a3c;color:#fff}.hist-save-btn:hover{filter:brightness(1.1)}
 
+/* ─── LOADING OVERLAY ─── */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,48,135,.18);z-index:999;align-items:center;justify-content:center}
+.loading-overlay.show{display:flex}
+.loading-box{background:#fff;border-radius:12px;padding:28px 40px;font-size:16px;font-weight:600;color:var(--blue);box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;align-items:center;gap:14px}
+.spinner{width:24px;height:24px;border:3px solid var(--blue-light);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ─── READONLY OVERLAY ─── */
 body.hist-readonly .ci,
 body.hist-readonly .cs,
@@ -102,16 +109,11 @@ body.hist-readonly .add-row-btn{display:none}
 .inc-table td{border:1px solid var(--border);padding:10px 16px;vertical-align:top}
 .inc-table td.q{width:65%}
 .inc-table .dark-row td{background:#e4ecf8;color:var(--text);font-weight:600;border:1px solid var(--border)}
-
-/* Criteria header row — สีเข้มเหมือน title ไม่มี radio */
 .inc-table .criteria-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:11px 16px;border:1px solid #1a2a5e}
-
-/* ── NEW: multidisc-header = หัวข้อสีเข้ม แต่มีช่อง No/Yes ── */
 .inc-table .multidisc-header td{background:#2c3e6b;color:#fff;font-weight:700;font-size:15px;padding:10px 16px;border:1px solid #1a2a5e}
 .inc-table .multidisc-header input[type=radio]{accent-color:#fff;width:17px;height:17px;cursor:pointer;}
 .inc-table .multidisc-header textarea{background:#3a5080;color:#fff;border-color:#5a78b0;}
 .inc-table .multidisc-header textarea::placeholder{color:rgba(255,255,255,.55);}
-
 .radio-group{display:flex;gap:22px;align-items:center}
 .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;white-space:nowrap}
 .radio-group input[type=radio]{width:17px;height:17px;cursor:pointer}
@@ -122,7 +124,6 @@ body.hist-readonly .add-row-btn{display:none}
 .occ-table{width:100%;border-collapse:collapse;font-size:15px}
 .occ-table th{background:#2c3e6b;color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .occ-table td{border:1px solid var(--border);padding:8px 12px}
-/* ลดช่อง Occurrence label */
 .occ-table td.occ-label{width:20%;font-size:14px}
 .occ-table td.occ-hn{width:30%}
 .occ-table td.occ-hn input{width:100%;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;outline:none}
@@ -157,10 +158,18 @@ body.hist-readonly .add-row-btn{display:none}
 #toast.ok{background:#e8f5ec;color:#1a7a3c;border:1px solid #a8d5b5;display:block}
 #toast.err{background:#fdecea;color:#c0392b;border:1px solid #f5bbb6;display:block}
 
-@media print{.topbar,.cbar,.hist-banner{display:none !important}.page{padding:8px;max-width:100%}}
+@media print{.topbar,.cbar,.hist-banner,.loading-overlay{display:none !important}.page{padding:8px;max-width:100%}}
 </style>
 </head>
 <body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    กำลังโหลดข้อมูล...
+  </div>
+</div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -180,12 +189,10 @@ body.hist-readonly .add-row-btn{display:none}
 
 <!-- CONTROL BAR -->
 <div class="cbar">
-  <!-- วันที่ -->
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">วันที่</span>
     <input type="date" id="sel-date" onchange="onDateChange()">
   </div>
-  <!-- กะ — แยกปุ่ม 2 ปุ่ม ไม่มี tab รวม -->
   <div style="display:flex;align-items:center;gap:10px">
     <span class="clabel">เวลา</span>
     <div style="display:flex;gap:8px">
@@ -200,9 +207,8 @@ body.hist-readonly .add-row-btn{display:none}
     <div class="hist-divider"></div>
     <input type="date" id="hist-date" class="hist-date-input">
     <div class="hist-shift-group">
-      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')"> 07:00–19:00</button>
-      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')"> 19:00–07:00</button>
-    </div>
+      <button class="hsbtn hs-active-day" id="hbtn-day" onclick="setHistShift('day')">07:00–19:00</button>
+      <button class="hsbtn" id="hbtn-night" onclick="setHistShift('night')">🌙 
     <button class="hist-go-btn" onclick="jumpToHist()">🔍 เปิดดู</button>
   </div>
 </div>
@@ -321,12 +327,6 @@ let isEditMode  = false;
 let histViewDate  = '';
 let histViewShift = '';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INC_ROWS
-//   dark:true  = แถวสีฟ้าอ่อน (sub-item ใต้หัวข้อ)   ← admit48/72/4 เดิม
-//   dark:false = แถวสีขาวปกติ
-//   isMultidisc:true = แถวหัวข้อสีเข้ม (#2c3e6b) แต่มี No/Yes
-// ─────────────────────────────────────────────────────────────────────────────
 const INC_ROWS = [
   {k:'methods',   label:'Methods – แนวทางปฏิบัติ / กระบวนการทำงาน',                             dark:false, hasRadio:true},
   {k:'equipment', label:'Equipment – อุปกรณ์ / เครื่องมือแพทย์',                                dark:false, hasRadio:true},
@@ -334,9 +334,7 @@ const INC_ROWS = [
   {k:'staffing',  label:'Staffing – อัตรากำลัง',                                                dark:false, hasRadio:true},
   {k:'experience',label:'Experience – ความพึงพอใจ / คำติ / คำชม',                              dark:false, hasRadio:true},
   {k:'safety',    label:'Safety – ความเสี่ยงทั่วไป / คลินิก / ความปลอดภัย (รวม Staff Injury)', dark:false, hasRadio:true},
-  // ── หัวข้อสีเข้ม ไม่มี radio ──
   {k:'multidisc', label:'Criteria Multidisciplinary Conference',                                 dark:false, hasRadio:false, isMultidisc:true},
-  // ── 3 รายการใต้หัวข้อ: สีขาว (dark:false) มี No/Yes ──
   {k:'admit48',   label:'Pt. Admit 48 ชม. ยังไม่ได้ Definite Dx.',                             dark:false, hasRadio:true},
   {k:'admit72',   label:'Pt. Admit 72 ชม. อาการยังไม่ดีขึ้น',                                 dark:false, hasRadio:true},
   {k:'admit4',    label:'Pt. Admit มีแพทย์ร่วมดูแลตั้งแต่ 4 ท่านขึ้นไป',                     dark:false, hasRadio:true},
@@ -355,6 +353,37 @@ function thaiDate(str){
 function docKey(date, shift){ return `${date.replace(/-/g,'')}_${shift}`; }
 
 // ════════════════════════════════════════
+// LOADING
+// ════════════════════════════════════════
+function showLoading(show){
+  document.getElementById('loading-overlay').classList.toggle('show', show);
+}
+
+// ════════════════════════════════════════
+// FIREBASE READ / WRITE
+// ════════════════════════════════════════
+async function fbGet(key){
+  if(!db) return null;
+  try{
+    const snap = await db.ref('ward15e/' + key).get();
+    return snap.exists() ? snap.val() : null;
+  }catch(e){
+    console.warn('Firebase read error:', e);
+    return null;
+  }
+}
+
+async function fbSet(key, data){
+  if(!db) throw new Error('ไม่ได้เชื่อมต่อ Firebase');
+  await db.ref('ward15e/' + key).set({...data, updatedAt: new Date().toISOString()});
+}
+
+async function fbDelete(key){
+  if(!db) return;
+  await db.ref('ward15e/' + key).remove();
+}
+
+// ════════════════════════════════════════
 // HISTORY CONTROLS
 // ════════════════════════════════════════
 function setHistShift(shift){
@@ -370,14 +399,11 @@ async function jumpToHist(){
   histViewDate  = histDate;
   histViewShift = histSelectedShift;
 
-  let data = null;
-  if(db){
-    try{
-      const snap = await db.ref('ward15e/' + docKey(histDate, histSelectedShift)).get();
-      if(snap.exists()) data = snap.val();
-    }catch(e){}
-  }
+  showLoading(true);
+  // ดึงจาก Firebase ก่อนเสมอ ถ้าไม่มีค่อย fallback ไป localStorage
+  let data = await fbGet(docKey(histDate, histSelectedShift));
   if(!data) data = loadLocalByKey(docKey(histDate, histSelectedShift));
+  showLoading(false);
 
   isHistMode = true;
   isEditMode = false;
@@ -386,14 +412,14 @@ async function jumpToHist(){
   const banner = document.getElementById('hist-banner');
   banner.classList.add('show');
   document.getElementById('hist-banner-info').textContent =
-    (histSelectedShift==='day'?' 07:00–19:00':' 19:00–07:00') + ' — ' + thaiDate(histDate);
+    (histSelectedShift==='day'?'07:00–19:00':'19:00–07:00') + ' — ' + thaiDate(histDate);
 
   document.getElementById('hist-edit-btn').textContent   = '✏️ แก้ไข';
   document.getElementById('hist-edit-btn').className     = 'hist-action-btn hist-edit-btn';
   document.getElementById('hist-save-btn').style.display = 'none';
 
   document.getElementById('page-title').textContent =
-    (histSelectedShift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(histDate);
+    (histSelectedShift==='day'?'07:00–19:00 น.':'19:00–07:00 น.')+' — '+thaiDate(histDate);
 
   document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, data);
   restoreData(data, histSelectedShift);
@@ -426,13 +452,15 @@ async function saveHistEdits(){
   currentDate  = origDate;
   currentShift = origShift;
 
-  if(db){
-    try{
-      await db.ref('ward15e/' + docKey(histViewDate, histViewShift)).set({...data, updatedAt: new Date().toISOString()});
-      showToast('✅ บันทึกการแก้ไขสำเร็จ','ok');
-    }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); return; }
-  } else {
-    showToast('💾 บันทึก Local เรียบร้อย','ok');
+  showLoading(true);
+  try{
+    await fbSet(docKey(histViewDate, histViewShift), data);
+    showLoading(false);
+    showToast('✅ บันทึกการแก้ไขสำเร็จ','ok');
+  }catch(e){
+    showLoading(false);
+    showToast('❌ Firebase Error: '+e.message,'err');
+    return;
   }
   toggleEditMode();
 }
@@ -448,7 +476,7 @@ function exitHistMode(){
 function confirmDeleteHist(){
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>` +
-    `กะ: <strong>${histViewShift==='day'?' 07:00–19:00':' 19:00–07:00'}</strong><br><br>` +
+    `กะ: <strong>${histViewShift==='day'?'07:00–19:00':'19:00–07:00'}</strong><br><br>` +
     `ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`;
   document.getElementById('confirm-overlay').classList.add('open');
 }
@@ -458,50 +486,64 @@ async function doDelete(){
   closeConfirm();
   const key = docKey(histViewDate, histViewShift);
   localStorage.removeItem(`w15e_data_${key}`);
-  if(db){
-    try{
-      await db.ref('ward15e/' + key).remove();
-      showToast('🗑 ลบข้อมูลเรียบร้อย','ok');
-    }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); return; }
-  } else {
-    showToast('🗑 ลบข้อมูล Local เรียบร้อย','ok');
+  showLoading(true);
+  try{
+    await fbDelete(key);
+    showLoading(false);
+    showToast('🗑 ลบข้อมูลเรียบร้อย','ok');
+  }catch(e){
+    showLoading(false);
+    showToast('❌ Firebase Error: '+e.message,'err');
+    return;
   }
   exitHistMode();
 }
 
 // ════════════════════════════════════════
-// MAIN RENDER
+// MAIN RENDER — ดึงจาก Firebase ก่อนเสมอ
 // ════════════════════════════════════════
-function init(){
+async function init(){
   const today = todayStr();
   document.getElementById('sel-date').value  = today;
   document.getElementById('hist-date').value = today;
   currentDate = today;
   setHistShift('day');
-  setShift('day', true);
+  currentShift = 'day';
+  document.getElementById('tab-day').className   = 'shift-btn active-day';
+  document.getElementById('tab-night').className = 'shift-btn';
+  await renderPage();
 }
 
-function onDateChange(){ currentDate = document.getElementById('sel-date').value; renderPage(); }
+async function onDateChange(){
+  currentDate = document.getElementById('sel-date').value;
+  await renderPage();
+}
 
-function setShift(shift, skipRender){
+async function setShift(shift){
   currentShift = shift;
-  const dayBtn   = document.getElementById('tab-day');
-  const nightBtn = document.getElementById('tab-night');
-  dayBtn.className   = 'shift-btn' + (shift==='day'   ? ' active-day'   : '');
-  nightBtn.className = 'shift-btn' + (shift==='night' ? ' active-night' : '');
-  if(!skipRender) renderPage();
+  document.getElementById('tab-day').className   = 'shift-btn' + (shift==='day'   ? ' active-day'   : '');
+  document.getElementById('tab-night').className = 'shift-btn' + (shift==='night' ? ' active-night' : '');
+  await renderPage();
 }
 
-function renderPage(preloadData){
-  if(isHistMode){ return; }
-  const shift = currentShift;
+async function renderPage(){
+  if(isHistMode) return;
   document.getElementById('page-title').textContent =
-    (shift==='day'?' 07:00–19:00 น.':' 19:00–07:00 น.')+' — '+thaiDate(currentDate);
-  const data = preloadData || loadLocal();
-  document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
-  restoreData(data, shift);
+    (currentShift==='day'?07:00–19:00 น.':'19:00–07:00 น.')+' — '+thaiDate(currentDate);
+
+  showLoading(true);
+  // ดึงจาก Firebase ก่อนเสมอ ถ้าไม่มีค่อย fallback ไป localStorage
+  let data = await fbGet(docKey(currentDate, currentShift));
+  if(!data) data = loadLocal();
+  showLoading(false);
+
+  document.getElementById('shift-content').innerHTML = buildShiftHTML(currentShift, data);
+  restoreData(data, currentShift);
 }
 
+// ════════════════════════════════════════
+// BUILD HTML
+// ════════════════════════════════════════
 function buildShiftHTML(shift, data){
   const isNight  = shift==='night';
   const hClass   = isNight?'night':'day';
@@ -509,7 +551,7 @@ function buildShiftHTML(shift, data){
   const roleLabel = r => r==='rn'?'RN' : r==='pn'?'PN' : 'Admin Officer';
   const roleMap   = {rn:'RN', pn:'PN', aux:'AUX'};
 
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?' 19:00–07:00 น.':' 07:00–19:00 น.'}</div>`;
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'19:00–07:00 น.':'07:00–19:00 น.'}</div>`;
 
   ['rn','pn','aux'].forEach(role=>{
     const sid        = `${role}-${shift}`;
@@ -540,10 +582,8 @@ function buildShiftHTML(shift, data){
 
   INC_ROWS.forEach(r=>{
     if(r.isMultidisc){
-      // ── หัวข้อสีเข้ม criteria-header ไม่มี radio (เหมือน title) ──
       html += `<tr class="criteria-header"><td colspan="3">${r.label}</td></tr>`;
     } else {
-      // ── แถวปกติ สีขาว (dark:false) หรือสีฟ้าอ่อน (dark:true) ──
       const darkStyle = r.dark ? 'background:#e4ecf8;color:var(--text,#1a2340);font-weight:600;' : '';
       html += `<tr>
         <td style="${darkStyle}border:1px solid var(--border);padding:10px 16px;">${r.label}</td>
@@ -560,7 +600,6 @@ function buildShiftHTML(shift, data){
 
   html += `</tbody></table>`;
 
-  // Occurrence
   html += `<div class="occ-wrap"><table class="occ-table">
     <tr>
       <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
@@ -607,6 +646,9 @@ function toggleYes(key, show){
   if(el) el.classList.toggle('show', show);
 }
 
+// ════════════════════════════════════════
+// COLLECT / RESTORE DATA
+// ════════════════════════════════════════
 function collectData(){
   const shift = isHistMode ? histViewShift : currentShift;
   const out = {date: isHistMode ? histViewDate : currentDate, shift};
@@ -658,6 +700,9 @@ function restoreData(data, shift){
   });
 }
 
+// ════════════════════════════════════════
+// LOCAL STORAGE (fallback เท่านั้น)
+// ════════════════════════════════════════
 function loadLocal(){
   return loadLocalByKey(docKey(currentDate, currentShift));
 }
@@ -665,16 +710,25 @@ function loadLocalByKey(key){
   try{ return JSON.parse(localStorage.getItem(`w15e_data_${key}`)); }
   catch(e){ return null; }
 }
-function saveLocal(data){ localStorage.setItem(`w15e_data_${docKey(data.date,data.shift)}`, JSON.stringify(data)); }
+function saveLocal(data){
+  localStorage.setItem(`w15e_data_${docKey(data.date,data.shift)}`, JSON.stringify(data));
+}
 
+// ════════════════════════════════════════
+// SAVE — บันทึกทั้ง Firebase และ Local
+// ════════════════════════════════════════
 async function saveData(){
   const data = collectData();
   saveLocal(data);
-  if(!db){ showToast('💾 บันทึก Local เรียบร้อย (ไม่ได้เชื่อม Firebase)','ok'); return; }
+  showLoading(true);
   try{
-    await db.ref('ward15e/' + docKey(data.date, data.shift)).set({...data, updatedAt: new Date().toISOString()});
+    await fbSet(docKey(data.date, data.shift), data);
+    showLoading(false);
     showToast('✅ บันทึก Firebase เรียบร้อย','ok');
-  }catch(e){ showToast('❌ Firebase Error: '+e.message,'err'); }
+  }catch(e){
+    showLoading(false);
+    showToast('⚠️ บันทึก Local เท่านั้น (Firebase: '+e.message+')','err');
+  }
 }
 
 // ════════════════════════════════════════
@@ -710,6 +764,9 @@ function delStaff(id){
 document.getElementById('staff-overlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
 document.getElementById('confirm-overlay').addEventListener('click', function(e){ if(e.target===this) closeConfirm(); });
 
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
 function showToast(msg, type){
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
@@ -717,6 +774,9 @@ function showToast(msg, type){
   el._t = setTimeout(()=>{ el.className=''; }, 3200);
 }
 
+// ════════════════════════════════════════
+// START
+// ════════════════════════════════════════
 init();
 </script>
 </body>
