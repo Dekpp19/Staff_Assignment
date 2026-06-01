@@ -17,11 +17,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:16px;min-height:100vh}
 
-
-
 .topbar{background:var(--blue);color:#fff;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.22)}
 .brand{display:flex;align-items:center;gap:16px}
-.logo{width:46px;height:46px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);font-size:13px;line-height:1.3;text-align:center}
 .brand-text h1{font-size:20px;font-weight:700}
 .brand-text p{font-size:13px;opacity:.72;margin-top:2px}
 .topbar-right{display:flex;gap:10px;align-items:center}
@@ -240,7 +237,7 @@ body.hist-readonly .add-row-btn{display:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
-// FIREBASE
+// FIREBASE CONFIG
 // ══════════════════════════════════════════════════════
 const FB_CONFIG = {
   apiKey:            "AIzaSyD2-2kU0LXgirj4oSdK3hcSRAhAjtGJhyc",
@@ -251,129 +248,121 @@ const FB_CONFIG = {
   messagingSenderId: "980707484583",
   appId:             "1:980707484583:web:8d1d780d8e72d611628c82"
 };
+
+// ── Ward identifier (เปลี่ยนได้ตามต้องการ) ──
+const WARD_ID = 'ward15e';
+
 let db = null;
 try {
   firebase.initializeApp(FB_CONFIG);
   db = firebase.database();
-  console.log('Firebase connected');
 } catch(e) {
   console.warn('Firebase init error:', e.message);
 }
 
-async function fbGet(key){
-  if(!db) return null;
+// ══════════════════════════════════════════════════════
+// WARD REF HELPERS  (เหมือนโครงสร้าง Bed Exit Alarm)
+// ══════════════════════════════════════════════════════
+// path ข้อมูลกะ:    wards/ward15e/staffAssignment/{docKey}
+// path รายชื่อ:     wards/ward15e/staffList
+function wardRef(path) {
+  const base = 'wards/' + WARD_ID;
+  return path ? db.ref(base + '/' + path) : db.ref(base);
+}
+function shiftRef(key) { return wardRef('staffAssignment/' + key); }
+function staffListRef()  { return wardRef('staffList'); }
+
+async function fbGet(key) {
+  if (!db) return null;
   try {
-    const snap = await db.ref('ward15e/'+key).get();
+    const snap = await shiftRef(key).get();
     return snap.exists() ? snap.val() : null;
   } catch(e) { return null; }
 }
-async function fbSet(key, data){
-  if(!db) throw new Error('ไม่ได้เชื่อมต่อ Firebase');
-  await db.ref('ward15e/'+key).set({...data, updatedAt: new Date().toISOString()});
+async function fbSet(key, data) {
+  if (!db) throw new Error('ไม่ได้เชื่อมต่อ Firebase');
+  await shiftRef(key).set({ ...data, updatedAt: new Date().toISOString() });
 }
-async function fbDelete(key){
-  if(!db) return;
-  await db.ref('ward15e/'+key).remove();
+async function fbDelete(key) {
+  if (!db) return;
+  await shiftRef(key).remove();
 }
 
 // ══════════════════════════════════════════════════════
-// REAL-TIME LISTENER  ← แก้ไขหลัก
+// REAL-TIME LISTENER
 // ══════════════════════════════════════════════════════
-let _rtRef       = null;
-let _rtKey       = null;
-let _isSaving    = false;    // true เฉพาะช่วง fbSet กำลังรัน
-let _skipNext    = false;    // กัน echo ของตัวเอง
-let _initialLoad = true;     // รอบแรกหลัง subscribe ไม่ต้อง toast
+let _rtRef = null, _rtKey = null, _isSaving = false, _skipNext = false, _initialLoad = true;
 
 function subscribeRealtime(date, shift) {
+  if (!db) return;
   const key = docKey(date, shift);
-  if(_rtKey === key) return;       // same key → ไม่ต้องทำซ้ำ
+  if (_rtKey === key) return;
   unsubscribeRealtime();
-  if(!db) return;
-  _rtKey = key;
-  _initialLoad = true;
-  _rtRef = db.ref('ward15e/'+key);
+  _rtKey = key; _initialLoad = true;
+  _rtRef = shiftRef(key);
   _rtRef.on('value', snap => {
-    if(isHistMode) return;
-    if(_skipNext) { _skipNext = false; return; }
+    if (isHistMode) return;
+    if (_skipNext) { _skipNext = false; return; }
     const data = snap.exists() ? snap.val() : null;
-    if(!data) return;
-    // รอบแรก (initial load) → restore ทั้งหมด ไม่ toast
-    if(_initialLoad) {
+    if (!data) return;
+    if (_initialLoad) {
       _initialLoad = false;
       document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
       restoreData(data, shift);
       saveLocal(data);
       return;
     }
-    // รอบถัดไป = ข้อมูลจากเครื่องอื่น → smart merge + toast
     mergeRemoteData(data, shift);
     saveLocal(data);
-    showToast('🔄 อัปเดตจากเครื่องอื่น','info');
-  }, e => { console.warn('RT listener error:', e); });
+    showToast('🔄 อัปเดตจากเครื่องอื่น', 'info');
+  }, e => console.warn('RT listener error:', e));
 }
 
 function unsubscribeRealtime() {
-  if(_rtRef) {
-    _rtRef.off('value');
-    _rtRef = null;
-    _rtKey = null;
-  }
+  if (_rtRef) { _rtRef.off('value'); _rtRef = null; _rtKey = null; }
 }
 
-// ── Smart merge: อัปเดต field ที่ไม่มี focus ──
-// ป้องกัน cursor หลุดขณะพิมพ์
 function mergeRemoteData(data, shift) {
   const focused = document.activeElement;
-  // อัป staff rows
   ['rn','pn','aux'].forEach(role => {
-    const rows  = data[role]||[];
+    const rows  = data[role] || [];
     const tbody = document.getElementById(`${role}-${shift}`);
-    if(!tbody) return;
-    // ถ้าจำนวนแถวต่างกัน → rebuild tbody ทั้งหมด แต่ป้องกัน focused el
-    if(rows.length > tbody.rows.length) {
+    if (!tbody) return;
+    if (rows.length > tbody.rows.length) {
       const roleMap = {rn:'RN',pn:'PN',aux:'AUX'};
-      const filtered = staff.filter(s=>s.role===roleMap[role]);
-      while(tbody.rows.length < rows.length) {
+      const filtered = staff.filter(s => s.role === roleMap[role]);
+      while (tbody.rows.length < rows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = buildRowInner(tbody.rows.length+1, `${role}-${shift}`, filtered);
+        tr.innerHTML = buildRowInner(tbody.rows.length + 1, `${role}-${shift}`, filtered);
         tbody.appendChild(tr);
       }
     }
-    rows.forEach((rd,i)=>{
-      const tr = tbody.rows[i]; if(!tr) return;
-      tr.querySelectorAll('[data-f]').forEach(el=>{
-        if(el === focused) return;           // กำลังพิมพ์อยู่ → ข้าม
-        if(rd[el.dataset.f] !== undefined) el.value = rd[el.dataset.f]||'';
+    rows.forEach((rd, i) => {
+      const tr = tbody.rows[i]; if (!tr) return;
+      tr.querySelectorAll('[data-f]').forEach(el => {
+        if (el === focused) return;
+        if (rd[el.dataset.f] !== undefined) el.value = rd[el.dataset.f] || '';
       });
     });
   });
-  // incidents
-  if(data.incidents) INC_ROWS.forEach(r=>{
-    if(!r.hasRadio) return;
-    const inc = data.incidents[r.k]; if(!inc) return;
+  if (data.incidents) INC_ROWS.forEach(r => {
+    if (!r.hasRadio) return;
+    const inc = data.incidents[r.k]; if (!inc) return;
     const radio = document.querySelector(`input[name="${shift}_${r.k}"][value="${inc.v}"]`);
-    if(radio && !radio.contains(focused)) {
-      radio.checked = true;
-      toggleYes(`${shift}_${r.k}`, inc.v==='yes');
-    }
+    if (radio && radio !== focused) { radio.checked = true; toggleYes(`${shift}_${r.k}`, inc.v === 'yes'); }
     const txt = document.getElementById(`yt_${shift}_${r.k}`);
-    if(txt && txt !== focused && inc.t !== undefined) txt.value = inc.t;
+    if (txt && txt !== focused && inc.t !== undefined) txt.value = inc.t;
   });
-  // occurrences
-  if(data.occurrences) [...OCC1,...OCC2].forEach(r=>{
+  if (data.occurrences) [...OCC1,...OCC2].forEach(r => {
     const el = document.getElementById(`oc_${shift}_${r.k}`);
-    if(el && el !== focused && data.occurrences[r.k] !== undefined)
-      el.value = data.occurrences[r.k];
+    if (el && el !== focused && data.occurrences[r.k] !== undefined) el.value = data.occurrences[r.k];
   });
 }
 
-
-
 // ══════════════════════════════════════════════════════
-// STAFF
+// STAFF  – โหลด/บันทึกจาก Firebase เป็นหลัก
 // ══════════════════════════════════════════════════════
-let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || [
+const DEFAULT_STAFF = [
   {id:'s1',  name:'กนกวรรณ RN3*', role:'RN'},
   {id:'s2',  name:'ศิริวรรณ RN3',  role:'RN'},
   {id:'s3',  name:'มยุรา RN4*',    role:'RN'},
@@ -389,7 +378,40 @@ let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || [
   {id:'s13', name:'ศราวรรค์ PN1',  role:'PN'},
   {id:'s14', name:'กัญญ์สุกุลา',   role:'AUX'},
 ];
-function saveStaff(){ localStorage.setItem('w15e_staff', JSON.stringify(staff)); }
+
+let staff = JSON.parse(localStorage.getItem('w15e_staff') || 'null') || DEFAULT_STAFF;
+
+// บันทึก staff ทั้ง localStorage และ Firebase
+async function saveStaff() {
+  localStorage.setItem('w15e_staff', JSON.stringify(staff));
+  if (!db) return;
+  try {
+    await staffListRef().set({ list: staff, updatedAt: new Date().toISOString() });
+  } catch(e) {
+    console.warn('saveStaff Firebase error:', e.message);
+  }
+}
+
+// โหลด staff จาก Firebase (ถ้ามี) แล้วอัปเดต local
+async function loadStaffFromFirebase() {
+  if (!db) return;
+  try {
+    const snap = await staffListRef().get();
+    if (snap.exists()) {
+      const data = snap.val();
+      const list = data.list || data; // รองรับทั้ง format เก่าและใหม่
+      if (Array.isArray(list) && list.length > 0) {
+        staff = list;
+        localStorage.setItem('w15e_staff', JSON.stringify(staff));
+      }
+    } else {
+      // Firebase ว่าง → เอา default ขึ้นไปเก็บ
+      await staffListRef().set({ list: staff, updatedAt: new Date().toISOString() });
+    }
+  } catch(e) {
+    console.warn('loadStaff Firebase error:', e.message);
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // STATE
@@ -414,21 +436,21 @@ const INC_ROWS = [
 const OCC1 = [{k:'med',label:'Medication Error ทุกมิติ'},{k:'fall',label:'Fall'},{k:'refer',label:'Refer out'}];
 const OCC2 = [{k:'transfer',label:'Transfer to higher level of care'},{k:'death',label:'Death'}];
 
-function todayStr(){
+function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-function thaiDate(str){
-  if(!str) return '—';
-  return new Date(str+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+function thaiDate(str) {
+  if (!str) return '—';
+  return new Date(str + 'T00:00:00').toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'});
 }
-function docKey(date,shift){ return `${date.replace(/-/g,'')}_${shift}`; }
-function showLoading(show){ document.getElementById('loading-bar').classList.toggle('show', show); }
+function docKey(date, shift) { return `${date.replace(/-/g,'')}_${shift}`; }
+function showLoading(show) { document.getElementById('loading-bar').classList.toggle('show', show); }
 
 // ══════════════════════════════════════════════════════
-// INIT
+// INIT  – โหลด staff ก่อน แล้วค่อยแสดงหน้า
 // ══════════════════════════════════════════════════════
-function init(){
+async function init() {
   const today = todayStr();
   document.getElementById('sel-date').value  = today;
   document.getElementById('hist-date').value = today;
@@ -436,41 +458,49 @@ function init(){
   currentShift = 'day';
   setHistShift('day');
   updateShiftButtons('day');
+
+  // แสดง local ก่อนให้หน้าไม่ว่าง
   const local = loadLocal();
   document.getElementById('page-title').textContent = '☀️ 07:00–19:00 น. — ' + thaiDate(today);
   document.getElementById('shift-content').innerHTML = buildShiftHTML('day', local);
   restoreData(local, 'day');
+
+  // โหลด staff จาก Firebase (อัปเดต dropdown)
+  showLoading(true);
+  await loadStaffFromFirebase();
+  showLoading(false);
+
+  // Rebuild หน้าด้วย staff ล่าสุด แล้ว subscribe realtime
+  renderPageLocal();
   subscribeRealtime(today, 'day');
 }
-
-
 
 // ══════════════════════════════════════════════════════
 // DATE / SHIFT CHANGE
 // ══════════════════════════════════════════════════════
-function onDateChange(){
-  if(isHistMode) return;
+function onDateChange() {
+  if (isHistMode) return;
   currentDate = document.getElementById('sel-date').value;
   renderPageLocal();
-  subscribeRealtime(currentDate, currentShift);  // subscribe ใหม่ทันที
+  subscribeRealtime(currentDate, currentShift);
 }
 
-function setShift(shift){
-  if(isHistMode) return;
+function setShift(shift) {
+  if (isHistMode) return;
   currentShift = shift;
   updateShiftButtons(shift);
   renderPageLocal();
-  subscribeRealtime(currentDate, currentShift);  // subscribe ใหม่ทันที
+  subscribeRealtime(currentDate, currentShift);
 }
 
-function updateShiftButtons(shift){
-  document.getElementById('tab-day').className   = 'shift-btn' + (shift==='day'   ? ' active-day'   : '');
-  document.getElementById('tab-night').className = 'shift-btn' + (shift==='night' ? ' active-night' : '');
+function updateShiftButtons(shift) {
+  document.getElementById('tab-day').className   = 'shift-btn' + (shift === 'day'   ? ' active-day'   : '');
+  document.getElementById('tab-night').className = 'shift-btn' + (shift === 'night' ? ' active-night' : '');
 }
 
-function renderPageLocal(){
-  if(isHistMode) return;
-  const label = (currentShift==='day' ? '☀️ 07:00–19:00 น.' : '🌙 19:00–07:00 น.') + ' — ' + thaiDate(currentDate);
+function renderPageLocal() {
+  if (isHistMode) return;
+  const label = (currentShift === 'day' ? '☀️ 07:00–19:00 น.' : '🌙 19:00–07:00 น.') + ' — ' + thaiDate(currentDate);
   document.getElementById('page-title').textContent = label;
   const local = loadLocal();
   document.getElementById('shift-content').innerHTML = buildShiftHTML(currentShift, local);
@@ -480,23 +510,22 @@ function renderPageLocal(){
 // ══════════════════════════════════════════════════════
 // HISTORY
 // ══════════════════════════════════════════════════════
-function setHistShift(shift){
+function setHistShift(shift) {
   histSelectedShift = shift;
-  document.getElementById('hbtn-day').className   = 'hsbtn' + (shift==='day'   ? ' hs-active-day'   : '');
-  document.getElementById('hbtn-night').className = 'hsbtn' + (shift==='night' ? ' hs-active-night' : '');
+  document.getElementById('hbtn-day').className   = 'hsbtn' + (shift === 'day'   ? ' hs-active-day'   : '');
+  document.getElementById('hbtn-night').className = 'hsbtn' + (shift === 'night' ? ' hs-active-night' : '');
 }
 
-async function jumpToHist(){
+async function jumpToHist() {
   const histDate = document.getElementById('hist-date').value;
-  if(!histDate){ showToast('⚠ กรุณาเลือกวันที่ก่อน','err'); return; }
+  if (!histDate) { showToast('⚠ กรุณาเลือกวันที่ก่อน', 'err'); return; }
   histViewDate  = histDate;
   histViewShift = histSelectedShift;
-  isHistMode = true;
-  isEditMode = false;
+  isHistMode = true; isEditMode = false;
   document.body.classList.add('hist-readonly');
-  unsubscribeRealtime();   // หยุด listen ขณะดูย้อนหลัง
+  unsubscribeRealtime();
 
-  const shiftLabel = histSelectedShift==='day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
+  const shiftLabel = histSelectedShift === 'day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
   document.getElementById('hist-banner').classList.add('show');
   document.getElementById('hist-banner-info').textContent = shiftLabel + ' — ' + thaiDate(histDate);
   document.getElementById('page-title').textContent = shiftLabel + ' น. — ' + thaiDate(histDate);
@@ -511,17 +540,17 @@ async function jumpToHist(){
   showLoading(true);
   const fbData = await fbGet(docKey(histDate, histSelectedShift));
   showLoading(false);
-  if(fbData){
+  if (fbData) {
     document.getElementById('shift-content').innerHTML = buildShiftHTML(histSelectedShift, fbData);
     restoreData(fbData, histSelectedShift);
   }
 }
 
-function toggleEditMode(){
+function toggleEditMode() {
   isEditMode = !isEditMode;
   const editBtn = document.getElementById('hist-edit-btn');
   const saveBtn = document.getElementById('hist-save-btn');
-  if(isEditMode){
+  if (isEditMode) {
     document.body.classList.remove('hist-readonly');
     editBtn.textContent = '🔒 ล็อกการแก้ไข';
     editBtn.className   = 'hist-action-btn hist-edit-btn editing';
@@ -534,7 +563,7 @@ function toggleEditMode(){
   }
 }
 
-async function saveHistEdits(){
+async function saveHistEdits() {
   const orig = {date: currentDate, shift: currentShift};
   currentDate  = histViewDate;
   currentShift = histViewShift;
@@ -546,55 +575,62 @@ async function saveHistEdits(){
   try {
     await fbSet(docKey(histViewDate, histViewShift), data);
     showLoading(false);
-    showToast('✅ บันทึกการแก้ไขสำเร็จ','ok');
+    showToast('✅ บันทึกการแก้ไขสำเร็จ', 'ok');
     toggleEditMode();
   } catch(e) {
     showLoading(false);
-    showToast('❌ Firebase Error: '+e.message,'err');
+    showToast('❌ Firebase Error: ' + e.message, 'err');
   }
 }
 
-function exitHistMode(){
+function exitHistMode() {
   isHistMode = false; isEditMode = false;
   document.body.classList.remove('hist-readonly');
   document.getElementById('hist-banner').classList.remove('show');
   renderPageLocal();
-  subscribeRealtime(currentDate, currentShift);  // resume listening
+  subscribeRealtime(currentDate, currentShift);
 }
 
-function confirmDeleteHist(){
-  const s = histViewShift==='day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
+function confirmDeleteHist() {
+  const s = histViewShift === 'day' ? '☀️ 07:00–19:00' : '🌙 19:00–07:00';
   document.getElementById('confirm-desc').innerHTML =
     `วันที่: <strong>${thaiDate(histViewDate)}</strong><br>กะ: <strong>${s}</strong><br><br>ข้อมูลจะถูกลบถาวร`;
   document.getElementById('confirm-overlay').classList.add('open');
 }
-function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); }
+function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
 
-async function doDelete(){
+async function doDelete() {
   closeConfirm();
   const key = docKey(histViewDate, histViewShift);
-  localStorage.removeItem('w15e_data_'+key);
+  localStorage.removeItem('w15e_data_' + key);
   showLoading(true);
-  try { await fbDelete(key); showLoading(false); showToast('🗑 ลบข้อมูลเรียบร้อย','ok'); }
-  catch(e) { showLoading(false); showToast('❌ Firebase Error: '+e.message,'err'); return; }
+  try {
+    await fbDelete(key);
+    showLoading(false);
+    showToast('🗑 ลบข้อมูลเรียบร้อย', 'ok');
+  } catch(e) {
+    showLoading(false);
+    showToast('❌ Firebase Error: ' + e.message, 'err');
+    return;
+  }
   exitHistMode();
 }
 
 // ══════════════════════════════════════════════════════
 // BUILD HTML
 // ══════════════════════════════════════════════════════
-function buildShiftHTML(shift, data){
-  const isNight = shift==='night';
+function buildShiftHTML(shift, data) {
+  const isNight = shift === 'night';
   const hClass  = isNight ? 'night' : 'day';
   const thClass = isNight ? 'night-tbl' : '';
-  const roleLabel = r => r==='rn'?'RN':r==='pn'?'PN':'Admin Officer';
-  const roleMap   = {rn:'RN',pn:'PN',aux:'AUX'};
-  let html = `<div class="card"><div class="card-header ${hClass}">${isNight?'🌙 19:00–07:00 น.':'☀️ 07:00–19:00 น.'}</div>`;
-  ['rn','pn','aux'].forEach(role=>{
+  const roleLabel = r => r === 'rn' ? 'RN' : r === 'pn' ? 'PN' : 'Admin Officer';
+  const roleMap   = {rn:'RN', pn:'PN', aux:'AUX'};
+  let html = `<div class="card"><div class="card-header ${hClass}">${isNight ? '🌙 19:00–07:00 น.' : '☀️ 07:00–19:00 น.'}</div>`;
+  ['rn','pn','aux'].forEach(role => {
     const sid       = `${role}-${shift}`;
-    const filtered  = staff.filter(s=>s.role===roleMap[role]);
-    const savedRows = (data&&data[role])||[];
-    const rowCount  = Math.max(role==='aux'?2:5, savedRows.length);
+    const filtered  = staff.filter(s => s.role === roleMap[role]);
+    const savedRows = (data && data[role]) || [];
+    const rowCount  = Math.max(role === 'aux' ? 2 : 5, savedRows.length);
     html += `<div class="card-header section">${roleLabel(role)}
       <button class="add-row-btn" onclick="addRow('${sid}')" style="padding:5px 16px;border-radius:6px;border:1.5px solid var(--blue);background:white;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มแถว</button>
     </div>
@@ -606,7 +642,7 @@ function buildShiftHTML(shift, data){
       <th style="width:110px">ลายเซ็น</th>
       <th style="width:70px">เข้า</th><th style="width:70px">ออก</th>
     </tr></thead><tbody id="${sid}">`;
-    for(let i=0;i<rowCount;i++) html += buildRow(i+1, sid, filtered);
+    for (let i = 0; i < rowCount; i++) html += buildRow(i + 1, sid, filtered);
     html += `</tbody></table>`;
   });
 
@@ -618,8 +654,8 @@ function buildShiftHTML(shift, data){
     <th style="background:var(--blue-mid);color:#fff;padding:9px 16px;text-align:center;font-size:14px;font-weight:600;border:1px solid #2a4a9a;">Yes – ระบุรายละเอียด</th>
   </tr></thead><tbody>`;
 
-  INC_ROWS.forEach(r=>{
-    if(r.isHeader){
+  INC_ROWS.forEach(r => {
+    if (r.isHeader) {
       html += `<tr class="criteria-header"><td colspan="3">${r.label}</td></tr>`;
     } else {
       html += `<tr>
@@ -643,22 +679,22 @@ function buildShiftHTML(shift, data){
       <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
       <th class="occ-label">Occurrence ที่สำคัญ</th><th class="occ-hn">ระบุ HN</th>
     </tr>`;
-  for(let i=0;i<Math.max(OCC1.length,OCC2.length);i++){
-    const a=OCC1[i], b=OCC2[i];
+  for (let i = 0; i < Math.max(OCC1.length, OCC2.length); i++) {
+    const a = OCC1[i], b = OCC2[i];
     html += `<tr>
-      <td class="occ-label">${a?a.label:''}</td>
-      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${a?a.k:'na'+i}"></td>
-      <td class="occ-label">${b?b.label:''}</td>
-      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${b?b.k:'nb'+i}"></td>
+      <td class="occ-label">${a ? a.label : ''}</td>
+      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${a ? a.k : 'na'+i}"></td>
+      <td class="occ-label">${b ? b.label : ''}</td>
+      <td class="occ-hn"><input type="text" placeholder="HN" id="oc_${shift}_${b ? b.k : 'nb'+i}"></td>
     </tr>`;
   }
   html += `</table></div></div></div>`;
   return html;
 }
 
-function buildRowInner(num, sid, filteredStaff){
+function buildRowInner(num, sid, filteredStaff) {
   let opts = '<option value="">— เลือก —</option>';
-  filteredStaff.forEach(s=>{ opts += `<option value="${s.name}">${s.name}</option>`; });
+  filteredStaff.forEach(s => { opts += `<option value="${s.name}">${s.name}</option>`; });
   return `
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
@@ -669,102 +705,103 @@ function buildRowInner(num, sid, filteredStaff){
     <td><input class="ci" type="text" data-f="out"  placeholder="เวลา"></td>`;
 }
 
-function buildRow(num, sid, filteredStaff){
+function buildRow(num, sid, filteredStaff) {
   return `<tr>${buildRowInner(num, sid, filteredStaff)}</tr>`;
 }
 
-function addRow(sid){
-  const tbody   = document.getElementById(sid); if(!tbody) return;
-  const role    = sid.split('-')[0];
-  const filtered= staff.filter(s=>s.role===({rn:'RN',pn:'PN',aux:'AUX'})[role]);
-  const tr      = document.createElement('tr');
-  tr.innerHTML  = buildRowInner(tbody.rows.length+1, sid, filtered);
+function addRow(sid) {
+  const tbody    = document.getElementById(sid); if (!tbody) return;
+  const role     = sid.split('-')[0];
+  const filtered = staff.filter(s => s.role === ({rn:'RN',pn:'PN',aux:'AUX'})[role]);
+  const tr = document.createElement('tr');
+  tr.innerHTML = buildRowInner(tbody.rows.length + 1, sid, filtered);
   tbody.appendChild(tr);
 }
 
-function toggleYes(key,show){
-  const el = document.getElementById('yb_'+key);
-  if(el) el.classList.toggle('show',show);
+function toggleYes(key, show) {
+  const el = document.getElementById('yb_' + key);
+  if (el) el.classList.toggle('show', show);
 }
 
 // ══════════════════════════════════════════════════════
 // COLLECT / RESTORE
 // ══════════════════════════════════════════════════════
-function collectData(){
+function collectData() {
   const shift = isHistMode ? histViewShift : currentShift;
-  const out   = {date: isHistMode ? histViewDate : currentDate, shift};
-  ['rn','pn','aux'].forEach(role=>{
+  const out   = { date: isHistMode ? histViewDate : currentDate, shift, ward: WARD_ID };
+  ['rn','pn','aux'].forEach(role => {
     const tbody = document.getElementById(`${role}-${shift}`);
-    out[role] = tbody ? Array.from(tbody.rows).map(tr=>{
-      const row={};
-      tr.querySelectorAll('[data-f]').forEach(el=>{ row[el.dataset.f]=el.value||''; });
+    out[role] = tbody ? Array.from(tbody.rows).map(tr => {
+      const row = {};
+      tr.querySelectorAll('[data-f]').forEach(el => { row[el.dataset.f] = el.value || ''; });
       return row;
     }) : [];
   });
   out.incidents = {};
-  INC_ROWS.forEach(r=>{
-    if(!r.hasRadio) return;
+  INC_ROWS.forEach(r => {
+    if (!r.hasRadio) return;
     const chk = document.querySelector(`input[name="${shift}_${r.k}"]:checked`);
     const txt = document.getElementById(`yt_${shift}_${r.k}`);
-    out.incidents[r.k] = {v:chk?chk.value:'no', t:txt?txt.value:''};
+    out.incidents[r.k] = { v: chk ? chk.value : 'no', t: txt ? txt.value : '' };
   });
   out.occurrences = {};
-  [...OCC1,...OCC2].forEach(r=>{
+  [...OCC1,...OCC2].forEach(r => {
     const el = document.getElementById(`oc_${shift}_${r.k}`);
     out.occurrences[r.k] = el ? el.value : '';
   });
   return out;
 }
 
-function restoreData(data, shift){
-  if(!data) return;
-  ['rn','pn','aux'].forEach(role=>{
-    const rows  = data[role]||[];
-    const tbody = document.getElementById(`${role}-${shift}`); if(!tbody) return;
-    rows.forEach((rd,i)=>{
-      if(i>=tbody.rows.length) addRow(`${role}-${shift}`);
-      const tr = tbody.rows[i]; if(!tr) return;
-      tr.querySelectorAll('[data-f]').forEach(el=>{ if(rd[el.dataset.f]) el.value=rd[el.dataset.f]; });
+function restoreData(data, shift) {
+  if (!data) return;
+  ['rn','pn','aux'].forEach(role => {
+    const rows  = data[role] || [];
+    const tbody = document.getElementById(`${role}-${shift}`); if (!tbody) return;
+    rows.forEach((rd, i) => {
+      if (i >= tbody.rows.length) addRow(`${role}-${shift}`);
+      const tr = tbody.rows[i]; if (!tr) return;
+      tr.querySelectorAll('[data-f]').forEach(el => { if (rd[el.dataset.f]) el.value = rd[el.dataset.f]; });
     });
   });
-  if(data.incidents) INC_ROWS.forEach(r=>{
-    if(!r.hasRadio) return;
-    const inc   = data.incidents[r.k]; if(!inc) return;
+  if (data.incidents) INC_ROWS.forEach(r => {
+    if (!r.hasRadio) return;
+    const inc   = data.incidents[r.k]; if (!inc) return;
     const radio = document.querySelector(`input[name="${shift}_${r.k}"][value="${inc.v}"]`);
-    if(radio){ radio.checked=true; toggleYes(`${shift}_${r.k}`, inc.v==='yes'); }
+    if (radio) { radio.checked = true; toggleYes(`${shift}_${r.k}`, inc.v === 'yes'); }
     const txt = document.getElementById(`yt_${shift}_${r.k}`);
-    if(txt&&inc.t) txt.value=inc.t;
+    if (txt && inc.t) txt.value = inc.t;
   });
-  if(data.occurrences) [...OCC1,...OCC2].forEach(r=>{
+  if (data.occurrences) [...OCC1,...OCC2].forEach(r => {
     const el = document.getElementById(`oc_${shift}_${r.k}`);
-    if(el&&data.occurrences[r.k]) el.value=data.occurrences[r.k];
+    if (el && data.occurrences[r.k]) el.value = data.occurrences[r.k];
   });
 }
 
 // ══════════════════════════════════════════════════════
 // LOCAL STORAGE
 // ══════════════════════════════════════════════════════
-function loadLocal(){ return loadLocalByKey(docKey(currentDate, currentShift)); }
-function loadLocalByKey(key){
-  try{ return JSON.parse(localStorage.getItem('w15e_data_'+key)); }
-  catch(e){ return null; }
+function loadLocal() { return loadLocalByKey(docKey(currentDate, currentShift)); }
+function loadLocalByKey(key) {
+  try { return JSON.parse(localStorage.getItem('w15e_data_' + key)); }
+  catch(e) { return null; }
 }
-function saveLocal(data){ localStorage.setItem('w15e_data_'+docKey(data.date,data.shift), JSON.stringify(data)); }
+function saveLocal(data) {
+  localStorage.setItem('w15e_data_' + docKey(data.date, data.shift), JSON.stringify(data));
+}
 
 // ══════════════════════════════════════════════════════
 // SAVE (manual)
 // ══════════════════════════════════════════════════════
-async function saveData(){
+async function saveData() {
   const data = collectData();
   saveLocal(data);
-  _skipNext = true;
-  _isSaving = true;
+  _skipNext = true; _isSaving = true;
   try {
-    await fbSet(docKey(data.date,data.shift), data);
-    showToast('✅ บันทึก Firebase เรียบร้อย','ok');
+    await fbSet(docKey(data.date, data.shift), data);
+    showToast('✅ บันทึก Firebase เรียบร้อย', 'ok');
   } catch(e) {
     _skipNext = false;
-    showToast('⚠️ บันทึก Local เท่านั้น ('+e.message+')','err');
+    showToast('⚠️ บันทึก Local เท่านั้น (' + e.message + ')', 'err');
   } finally {
     _isSaving = false;
   }
@@ -773,41 +810,55 @@ async function saveData(){
 // ══════════════════════════════════════════════════════
 // STAFF MODAL
 // ══════════════════════════════════════════════════════
-function openModal(){ renderStaffUI(); document.getElementById('staff-overlay').classList.add('open'); }
-function closeModal(){ document.getElementById('staff-overlay').classList.remove('open'); }
-function renderStaffUI(){
+function openModal() { renderStaffUI(); document.getElementById('staff-overlay').classList.add('open'); }
+function closeModal() { document.getElementById('staff-overlay').classList.remove('open'); }
+
+function renderStaffUI() {
   const el = document.getElementById('staff-list-ui');
   el.innerHTML = staff.length
-    ? staff.map(s=>`<div class="staff-item"><div><div class="si-name">${s.name}</div><div class="si-role">${s.role}</div></div><button class="del-btn" onclick="delStaff('${s.id}')">✕</button></div>`).join('')
+    ? staff.map(s => `
+        <div class="staff-item">
+          <div><div class="si-name">${s.name}</div><div class="si-role">${s.role}</div></div>
+          <button class="del-btn" onclick="delStaff('${s.id}')">✕</button>
+        </div>`).join('')
     : '<p style="color:var(--muted);font-size:15px">ยังไม่มีรายชื่อ</p>';
 }
-function addStaff(){
+
+async function addStaff() {
   const name = document.getElementById('new-name').value.trim();
   const role = document.getElementById('new-role').value;
-  if(!name) return;
-  staff.push({id:'S'+Date.now(), name, role});
-  saveStaff(); renderStaffUI();
-  if(!isHistMode){ renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
+  if (!name) return;
+  staff.push({ id: 'S' + Date.now(), name, role });
+  await saveStaff();
+  renderStaffUI();
   document.getElementById('new-name').value = '';
-  if(db) db.ref('ward15e_staff/list').set({staff});
+  if (!isHistMode) { renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
+  showToast('✅ เพิ่มรายชื่อแล้ว', 'ok');
 }
-function delStaff(id){
-  staff = staff.filter(s=>s.id!==id);
-  saveStaff(); renderStaffUI();
-  if(!isHistMode){ renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
-  if(db) db.ref('ward15e_staff/list').set({staff});
+
+async function delStaff(id) {
+  staff = staff.filter(s => s.id !== id);
+  await saveStaff();
+  renderStaffUI();
+  if (!isHistMode) { renderPageLocal(); subscribeRealtime(currentDate, currentShift); }
 }
-document.getElementById('staff-overlay').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
-document.getElementById('confirm-overlay').addEventListener('click',function(e){ if(e.target===this) closeConfirm(); });
+
+document.getElementById('staff-overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('confirm-overlay').addEventListener('click', function(e) { if (e.target === this) closeConfirm(); });
+
+// Enter key ใน input ชื่อ → เพิ่มทันที
+document.getElementById('new-name').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addStaff();
+});
 
 // ══════════════════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════════════════
-function showToast(msg,type){
+function showToast(msg, type) {
   const el = document.getElementById('toast');
-  el.textContent=msg; el.className=type;
+  el.textContent = msg; el.className = type;
   clearTimeout(el._t);
-  el._t=setTimeout(()=>{ el.className=''; },3200);
+  el._t = setTimeout(() => { el.className = ''; }, 3200);
 }
 
 // ══════════════════════════════════════════════════════
