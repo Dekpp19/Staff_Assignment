@@ -210,7 +210,7 @@ body.hist-readonly .add-row-btn{display:none}
       <select id="new-role">
         <option value="RN">RN – พยาบาลวิชาชีพ</option>
         <option value="PN">PN – พยาบาลเทคนิค</option>
-        <option value="AUX">Admin Officer </option>
+        <option value="AUX">เดขา / ผู้ช่วย</option>
       </select>
     </div>
     <button class="tbtn tbtn-white" style="border:1.5px solid var(--blue);color:var(--blue);margin-bottom:18px" onclick="addStaff()">+ เพิ่ม</button>
@@ -757,7 +757,6 @@ function saveLocal(data){ localStorage.setItem('w15e_data_'+docKey(data.date,dat
 async function saveData(){
   const data = collectData();
   saveLocal(data);
-  setRtBadge('syncing');
   _skipNext = true;
   _isSaving = true;
   try {
