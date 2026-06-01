@@ -143,7 +143,6 @@ body.hist-readonly .add-row-btn{display:none}
 
 <div class="topbar">
   <div class="brand">
-    <div class="logo">BH<br>PYA</div>
     <div class="brand-text">
       <h1>Ward 15E – Staff Assignment</h1>
       <p>Bangkok Hospital Pattaya</p>
@@ -211,7 +210,7 @@ body.hist-readonly .add-row-btn{display:none}
       <select id="new-role">
         <option value="RN">RN – พยาบาลวิชาชีพ</option>
         <option value="PN">PN – พยาบาลเทคนิค</option>
-        <option value="AUX">เดขา / ผู้ช่วย</option>
+        <option value="AUX">Admin Officer </option>
       </select>
     </div>
     <button class="tbtn tbtn-white" style="border:1.5px solid var(--blue);color:var(--blue);margin-bottom:18px" onclick="addStaff()">+ เพิ่ม</button>
@@ -295,24 +294,23 @@ function subscribeRealtime(date, shift) {
   _initialLoad = true;
   _rtRef = db.ref('ward15e/'+key);
   _rtRef.on('value', snap => {
-    // รอบแรก (initial load) → ใช้แค่ข้อมูล ไม่ toast
-    if(_initialLoad) { _initialLoad = false; }
-    // ถ้าอยู่ใน histMode ไม่ทำอะไร
     if(isHistMode) return;
-    // ถ้าเราเพิ่งบันทึกเอง → ข้ามรอบนี้ (echo กลับมาจาก Firebase)
     if(_skipNext) { _skipNext = false; return; }
     const data = snap.exists() ? snap.val() : null;
-    if(data) {
-      // ── SMART MERGE: อัปเดตเฉพาะ field ที่ focus ไม่อยู่ ──
-      mergeRemoteData(data, shift);
+    if(!data) return;
+    // รอบแรก (initial load) → restore ทั้งหมด ไม่ toast
+    if(_initialLoad) {
+      _initialLoad = false;
+      document.getElementById('shift-content').innerHTML = buildShiftHTML(shift, data);
+      restoreData(data, shift);
       saveLocal(data);
-      setRtBadge('live');
-      showToast('🔄 อัปเดตจากเครื่องอื่น','info');
+      return;
     }
-  }, e => {
-    console.warn('RT listener error:', e);
-    setRtBadge('offline');
-  });
+    // รอบถัดไป = ข้อมูลจากเครื่องอื่น → smart merge + toast
+    mergeRemoteData(data, shift);
+    saveLocal(data);
+    showToast('🔄 อัปเดตจากเครื่องอื่น','info');
+  }, e => { console.warn('RT listener error:', e); });
 }
 
 function unsubscribeRealtime() {
