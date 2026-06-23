@@ -263,17 +263,17 @@ try {
 async function fbGet(key){
   if(!db) return null;
   try {
-    const snap = await db.ref('ward15e/'+key).get();
+    const snap = await db.ref('wards/ward15e/staffAssignment/'+key).get();
     return snap.exists() ? snap.val() : null;
   } catch(e) { return null; }
 }
 async function fbSet(key, data){
   if(!db) throw new Error('ไม่ได้เชื่อมต่อ Firebase');
-  await db.ref('ward15e/'+key).set({...data, updatedAt: new Date().toISOString()});
+  await db.ref('wards/ward15e/staffAssignment/'+key).set({...data, updatedAt: new Date().toISOString()});
 }
 async function fbDelete(key){
   if(!db) return;
-  await db.ref('ward15e/'+key).remove();
+  await db.ref('wards/ward15e/staffAssignment/'+key).remove();
 }
 
 // ══════════════════════════════════════════════════════
@@ -292,7 +292,7 @@ function subscribeRealtime(date, shift) {
   if(!db) return;
   _rtKey = key;
   _initialLoad = true;
-  _rtRef = db.ref('ward15e/'+key);
+  _rtRef = db.ref('wards/ward15e/staffAssignment/'+key);
   _rtRef.on('value', snap => {
     if(isHistMode) return;
     if(_skipNext) { _skipNext = false; return; }
