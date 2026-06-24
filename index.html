@@ -393,22 +393,23 @@ function mergeRemoteData(data, shift) {
       }
     }
     rows.forEach((rd,i)=>{
-  const tr = tbody.rows[i]; if(!tr) return;
-  tr.querySelectorAll('[data-f]').forEach(el=>{
-    if(el === focused) return;
-    if(rd[el.dataset.f] === undefined) return;
-    if(el.tagName === 'SELECT' && el.dataset.f === 'name' && rd[el.dataset.f]){
-      const exists = Array.from(el.options).some(o=>o.value === rd[el.dataset.f]);
-      if(!exists){
-        const opt = document.createElement('option');
-        opt.value = rd[el.dataset.f];
-        opt.textContent = rd[el.dataset.f] + ' (ไม่อยู่ในรายชื่อปัจจุบัน)';
-        el.appendChild(opt);
-      }
-    }
-    el.value = rd[el.dataset.f]||'';
+      const tr = tbody.rows[i]; if(!tr) return;
+      tr.querySelectorAll('[data-f]').forEach(el=>{
+        if(el === focused) return;
+        if(rd[el.dataset.f] === undefined) return;
+        if(el.tagName === 'SELECT' && el.dataset.f === 'name' && rd[el.dataset.f]){
+          const exists = Array.from(el.options).some(o=>o.value === rd[el.dataset.f]);
+          if(!exists){
+            const opt = document.createElement('option');
+            opt.value = rd[el.dataset.f];
+            opt.textContent = rd[el.dataset.f] + ' (ไม่อยู่ในรายชื่อปัจจุบัน)';
+            el.appendChild(opt);
+          }
+        }
+        el.value = rd[el.dataset.f]||'';
+      });
+    });
   });
-});
   if(data.incidents) INC_ROWS.forEach(r=>{
     if(!r.hasRadio) return;
     const inc = data.incidents[r.k]; if(!inc) return;
@@ -647,6 +648,8 @@ function buildShiftHTML(shift, data){
     for(let i=0;i<rowCount;i++){
       const savedName = savedRows[i] ? savedRows[i].name : '';
       html += buildRow(i+1, sid, filtered, savedName);
+    }
+    html += `</tbody></table>`;
   });
 
   html += `<div class="inc-wrap"><div class="inc-title">📋 เรื่องแจ้ง / รายงานเหตุการณ์</div>
@@ -715,7 +718,6 @@ function buildRowInner(num, sid, filteredStaff, currentName){
 
 function buildRow(num, sid, filteredStaff, currentName){
   return `<tr>${buildRowInner(num, sid, filteredStaff, currentName)}</tr>`;
-}
 }
 
 function addRow(sid){
