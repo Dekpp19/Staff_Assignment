@@ -393,13 +393,22 @@ function mergeRemoteData(data, shift) {
       }
     }
     rows.forEach((rd,i)=>{
-      const tr = tbody.rows[i]; if(!tr) return;
-      tr.querySelectorAll('[data-f]').forEach(el=>{
-        if(el === focused) return;
-        if(rd[el.dataset.f] !== undefined) el.value = rd[el.dataset.f]||'';
-      });
-    });
+  const tr = tbody.rows[i]; if(!tr) return;
+  tr.querySelectorAll('[data-f]').forEach(el=>{
+    if(el === focused) return;
+    if(rd[el.dataset.f] === undefined) return;
+    if(el.tagName === 'SELECT' && el.dataset.f === 'name' && rd[el.dataset.f]){
+      const exists = Array.from(el.options).some(o=>o.value === rd[el.dataset.f]);
+      if(!exists){
+        const opt = document.createElement('option');
+        opt.value = rd[el.dataset.f];
+        opt.textContent = rd[el.dataset.f] + ' (ไม่อยู่ในรายชื่อปัจจุบัน)';
+        el.appendChild(opt);
+      }
+    }
+    el.value = rd[el.dataset.f]||'';
   });
+});
   if(data.incidents) INC_ROWS.forEach(r=>{
     if(!r.hasRadio) return;
     const inc = data.incidents[r.k]; if(!inc) return;
@@ -635,8 +644,9 @@ function buildShiftHTML(shift, data){
       <th style="width:150px">ลายเซ็น</th>
       <th style="width:70px">เข้า</th><th style="width:70px">ออก</th>
     </tr></thead><tbody id="${sid}">`;
-    for(let i=0;i<rowCount;i++) html += buildRow(i+1, sid, filtered);
-    html += `</tbody></table>`;
+    for(let i=0;i<rowCount;i++){
+      const savedName = savedRows[i] ? savedRows[i].name : '';
+      html += buildRow(i+1, sid, filtered, savedName);
   });
 
   html += `<div class="inc-wrap"><div class="inc-title">📋 เรื่องแจ้ง / รายงานเหตุการณ์</div>
@@ -685,9 +695,14 @@ function buildShiftHTML(shift, data){
   return html;
 }
 
-function buildRowInner(num, sid, filteredStaff){
+function buildRowInner(num, sid, filteredStaff, currentName){
   let opts = '<option value="">— เลือก —</option>';
   filteredStaff.forEach(s=>{ opts += `<option value="${s.name}">${s.name}</option>`; });
+  // ✅ FIX: ถ้าชื่อที่บันทึกไว้ไม่อยู่ใน staffList ปัจจุบัน (ถูกลบ/แก้ไขชื่อ)
+  // ให้เติม option นั้นเข้าไปแบบ "ไม่ใช้แล้ว" เพื่อไม่ให้ข้อมูลเก่าหายไปจากการแสดงผล
+  if(currentName && !filteredStaff.some(s=>s.name===currentName)){
+    opts += `<option value="${currentName}">${currentName} (ไม่อยู่ในรายชื่อปัจจุบัน)</option>`;
+  }
   return `
     <td class="num">${num}</td>
     <td><select class="cs" data-f="name">${opts}</select></td>
@@ -698,8 +713,9 @@ function buildRowInner(num, sid, filteredStaff){
     <td><input class="ci" type="text" data-f="out"  placeholder="เวลา"></td>`;
 }
 
-function buildRow(num, sid, filteredStaff){
-  return `<tr>${buildRowInner(num, sid, filteredStaff)}</tr>`;
+function buildRow(num, sid, filteredStaff, currentName){
+  return `<tr>${buildRowInner(num, sid, filteredStaff, currentName)}</tr>`;
+}
 }
 
 function addRow(sid){
@@ -753,7 +769,21 @@ function restoreData(data, shift){
     rows.forEach((rd,i)=>{
       if(i>=tbody.rows.length) addRow(`${role}-${shift}`);
       const tr = tbody.rows[i]; if(!tr) return;
-      tr.querySelectorAll('[data-f]').forEach(el=>{ if(rd[el.dataset.f]) el.value=rd[el.dataset.f]; });
+      tr.querySelectorAll('[data-f]').forEach(el=>{
+        if(!rd[el.dataset.f]) return;
+        // ✅ FIX: ถ้าเป็น dropdown ชื่อ และค่าที่จะ set ไม่มีใน option ใดเลย
+        // ให้เติม option นั้นเข้าไปก่อน ไม่งั้น el.value = ... จะเซ็ตไม่ติดแบบเงียบๆ
+        if(el.tagName === 'SELECT' && el.dataset.f === 'name'){
+          const exists = Array.from(el.options).some(o=>o.value === rd[el.dataset.f]);
+          if(!exists){
+            const opt = document.createElement('option');
+            opt.value = rd[el.dataset.f];
+            opt.textContent = rd[el.dataset.f] + ' (ไม่อยู่ในรายชื่อปัจจุบัน)';
+            el.appendChild(opt);
+          }
+        }
+        el.value = rd[el.dataset.f];
+      });
     });
   });
   if(data.incidents) INC_ROWS.forEach(r=>{
